@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Pixel look helpers (optional for your game) */
+:root {
+  --bg: #0f0f13;
+  --fg: #e7e7ea;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+canvas, img {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges; /* fallback */
+}
