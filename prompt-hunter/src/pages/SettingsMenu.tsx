@@ -15,7 +15,7 @@ function getCharacterStats(roleId: string) {
     case 'bard':
       return { health: 150, attack: 100, specialty: 'Creative Writing & Music' };
     case 'necromancer':
-      return { health: 70, attack: 50, specialty: 'Dark Arts & Algorithms' };
+      return { health: 100, attack: 50, specialty: 'Dark Arts & Algorithms' };
     case 'alchemist':
       return { health: 100, attack: 10, specialty: 'Data Transformation' };
     case 'hacker':
@@ -233,6 +233,15 @@ export default function SettingsMenu() {
                   {pack.roles.map((r) => {
                     const won = completedRoles.includes(r.id);
                     const sprite = pickSprite(r.id);
+                    let stageLabel: string | null = null;
+                    try {
+                      const raw = localStorage.getItem(`ph-progress-${r.id}`);
+                      if (raw) {
+                        const saved = JSON.parse(raw || '{}');
+                        const idx = typeof saved?.phaseIndex === 'number' ? saved.phaseIndex : 0;
+                        stageLabel = `Stage ${idx + 1}`;
+                      }
+                    } catch {}
                     return (
                       <button
                         key={r.id}
@@ -259,11 +268,18 @@ export default function SettingsMenu() {
                           <div className="text-xs text-slate-400">
                             {pack.meta.phases_per_run} challenges
                           </div>
-                          {won && (
-                            <span className="px-2 py-1 text-xs bg-green-600 text-white rounded-full font-medium">
-                              ✓ Complete
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {stageLabel && !won && (
+                              <span className="px-2 py-1 text-xs bg-blue-600 text-white rounded-full font-medium">
+                                {stageLabel}
+                              </span>
+                            )}
+                            {won && (
+                              <span className="px-2 py-1 text-xs bg-green-600 text-white rounded-full font-medium">
+                                ✓ Complete
+                              </span>
+                            )}
+                          </div>
                         </div>
                         
                         {won && (

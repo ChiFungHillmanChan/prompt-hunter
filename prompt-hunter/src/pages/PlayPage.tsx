@@ -19,7 +19,7 @@ function getCharacterStats(roleId: string) {
     case 'bard':
       return { health: 150, attack: 100, specialty: 'Creative Writing & Music' };
     case 'necromancer':
-      return { health: 70, attack: 50, specialty: 'Dark Arts & Algorithms' };
+      return { health: 100, attack: 50, specialty: 'Dark Arts & Algorithms' };
     case 'alchemist':
       return { health: 100, attack: 10, specialty: 'Data Transformation' };
     case 'hacker':
@@ -45,21 +45,39 @@ export default function PlayPage() {
   const nav = useNavigate();
   const { push } = useToast();
   const { pack } = useContent();
+  const defaultPhasesPerRun = useContent((s) => s.phasesPerRun);
   const settings = useSettings();
   const session = useSession();
   const { markRoleWin } = useProgress();
   const role = useMemo(() => pack?.roles.find((r) => r.id === roleId) || null, [pack, roleId]);
-  const phasesPerRun = role?.phases.length || useContent((s) => s.phasesPerRun);
+  const phasesPerRun = role?.phases.length ?? defaultPhasesPerRun;
   const characterStats = useMemo(() => (role ? getCharacterStats(role.id) : null), [role?.id]);
   
   const [playerShaking, setPlayerShaking] = useState(false);
   const [monsterShaking, setMonsterShaking] = useState(false);
   const [showPlayerDamage, setShowPlayerDamage] = useState(false);
   const [showMonsterDamage, setShowMonsterDamage] = useState(false);
+  const [showVictoryModal, setShowVictoryModal] = useState(false);
+  const [showPhaseClearModal, setShowPhaseClearModal] = useState(false);
 
   useEffect(() => {
     if (!role || !characterStats) return;
-    const monsterHP = 100; // fixed per stage (Mysterious heal logic handled on damage)
+    // Load saved progress if present; otherwise start fresh
+    try {
+      const key = `ph-progress-${role.id}`;
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const saved = JSON.parse(raw || '{}');
+        const savedPhase = Math.max(0, Math.min(Number(saved.phaseIndex) || 0, (role.phases.length || 1) - 1));
+        const savedMonsterHP = Math.max(0, Number(saved.monsterHP) || 100);
+        const savedMaxMonsterHP = Math.max(savedMonsterHP, Number(saved.maxMonsterHP) || savedMonsterHP);
+        const savedPlayerHP = Math.max(0, Math.min(characterStats.health, Number(saved.playerHP) || characterStats.health));
+        session.resetForRole(role.id, characterStats.health, savedMonsterHP);
+        useSession.setState({ phaseIndex: savedPhase, playerHP: savedPlayerHP, maxMonsterHP: savedMaxMonsterHP });
+        return;
+      }
+    } catch {}
+    const monsterHP = 100; // default per stage
     session.resetForRole(role.id, characterStats.health, monsterHP);
   }, [role?.id]);
 
@@ -97,9 +115,24 @@ export default function PlayPage() {
           
           if (newHp <= 0) {
             push('error', 'Defeated — returning to Settings');
+            try { if (role) localStorage.removeItem(`ph-progress-${role.id}`); } catch {}
             setTimeout(() => nav(ROUTES.ROOT), 800);
             return { ...s, playerHP: 0, running: false, nextAttackMs: settings.attackIntervalMs };
           }
+          // Persist updated player HP mid-combat (monster attack tick)
+          try {
+            if (role) {
+              localStorage.setItem(
+                `ph-progress-${role.id}`,
+                JSON.stringify({
+                  phaseIndex: s.phaseIndex,
+                  monsterHP: s.monsterHP,
+                  maxMonsterHP: s.maxMonsterHP,
+                  playerHP: newHp,
+                })
+              );
+            }
+          } catch {}
           return { ...s, playerHP: newHp, nextAttackMs: settings.attackIntervalMs };
         }
         return { ...s, nextAttackMs: next };
@@ -144,11 +177,18 @@ export default function PlayPage() {
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         
         {/* Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
-            {role.name} vs Phase {phaseNumber}
-          </h1>
-          <div className="flex justify-center items-center gap-4 text-sm">
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => nav(ROUTES.ROOT)}
+              className="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm text-white"
+            >Back to Menu</button>
+            <h1 className="text-2xl md:text-3xl font-bold text-white text-center flex-1">
+              {role.name} - Stage {phaseNumber}
+            </h1>
+            <div className="w-[110px]" />
+          </div>
+          <div className="flex justify-center items-center gap-4 text-sm mt-2">
             <span className="text-slate-400">Phase {session.phaseIndex + 1} of {phasesPerRun}</span>
             <div className={`px-3 py-1 rounded-full ${timeLeft <= 2 ? 'bg-red-500/20 text-red-300' : 'bg-orange-500/20 text-orange-300'}`}>
               Next attack: {timeLeft}s
@@ -246,7 +286,13 @@ export default function PlayPage() {
             </div>
             
             <div className="bg-white/5 backdrop-blur rounded-xl p-6 border border-white/10">
+              {role.id === 'necromancer' && (
+                <div className="mb-3 text-xs text-yellow-300">
+                  Format: Answer clearly with "A) ..." and "B) ..."
+                </div>
+              )}
               <AnswerPanel
+                key={`${role.id}-${session.phaseIndex}`}
                 phase={role.phases[session.phaseIndex]}
                 onScore={(score) => {
                   let damage = Math.max(0, score);
@@ -266,7 +312,13 @@ export default function PlayPage() {
                     if (nextPhase >= phasesPerRun) {
                       markRoleWin(role.id);
                       push('success', 'Victory!');
-                      setTimeout(() => nav(ROUTES.ROOT), 700);
+                      // Stop the combat loop and show success modal with Continue
+                      if (rafRef.current) {
+                        cancelAnimationFrame(rafRef.current);
+                        rafRef.current = null;
+                      }
+                      useSession.setState({ running: false });
+                      setShowVictoryModal(true);
                     } else {
                       const nextMonsterHP = 100;
                       useSession.setState({
@@ -275,9 +327,34 @@ export default function PlayPage() {
                         maxMonsterHP: nextMonsterHP,
                       });
                       push('success', 'Phase cleared!');
+                      setShowPhaseClearModal(true);
+                      // Persist progress
+                      try {
+                        localStorage.setItem(
+                          `ph-progress-${role.id}`,
+                          JSON.stringify({
+                            phaseIndex: nextPhase,
+                            monsterHP: nextMonsterHP,
+                            maxMonsterHP: nextMonsterHP,
+                            playerHP: session.playerHP,
+                          })
+                        );
+                      } catch {}
                     }
                   } else {
                     useSession.setState({ monsterHP: newHp });
+                    // Update monster HP persistently mid-phase
+                    try {
+                      localStorage.setItem(
+                        `ph-progress-${role.id}`,
+                        JSON.stringify({
+                          phaseIndex: session.phaseIndex,
+                          monsterHP: newHp,
+                          maxMonsterHP: session.maxMonsterHP,
+                          playerHP: session.playerHP,
+                        })
+                      );
+                    } catch {}
                   }
                 }}
               />
@@ -290,6 +367,36 @@ export default function PlayPage() {
           </div>
         </div>
       </div>
+
+      {showPhaseClearModal && !showVictoryModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-40">
+          <div className="bg-slate-800 rounded-xl p-6 max-w-md w-full border border-white/20 shadow-xl text-center">
+            <div className="text-3xl mb-2">✨</div>
+            <div className="text-xl font-bold text-white mb-2">Phase Cleared!</div>
+            <div className="text-slate-300 mb-6">Prepare for the next challenge.</div>
+            <button
+              onClick={() => setShowPhaseClearModal(false)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium transition-colors"
+            >Continue</button>
+          </div>
+        </div>
+      )}
+
+      {showVictoryModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-800 rounded-xl p-6 max-w-md w-full border border-white/20 shadow-2xl text-center">
+            <div className="text-4xl mb-2">🏆</div>
+            <div className="text-2xl font-bold text-white mb-2">Victory!</div>
+            <div className="text-slate-300 mb-6">You cleared all stages.</div>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => nav(ROUTES.ROOT)}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white font-medium transition-colors"
+              >Continue</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

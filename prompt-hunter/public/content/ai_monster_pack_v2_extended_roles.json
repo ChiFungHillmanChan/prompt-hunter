@@ -1,6 +1,6 @@
 {
   "meta": {
-    "name": "ai_monster_pack_v3_numeric_ai_schemes",
+    "name": "ai_monster_pack_v4_revised_questions",
     "created_utc": "2025-08-24T00:00:00.000Z",
     "phases_per_run": 5,
     "validator_api_note": "Validators include ai_score which must call an LLM and return ONLY a number as a string."
@@ -15,36 +15,36 @@
         {
           "phase": 1,
           "task_type": "bugfix",
-          "prompt": "Fix the loop so it pushes exactly 3 '⚙️' into parts without off-by-one errors.",
-          "bugged_code": "const parts=[]; for (let i=1;i<=3;i++) { parts.push('⚙️'); } if(parts.length!==4){console.log('bad');}",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Verify the user's fix meets the prompt and does not reveal the exact code. Respond only with 100 for correct, else 0." }
+          "prompt": "Your goal:\n- Fix the loop so it prints numbers 1 through 5 (inclusive) in order.\nConstraints:\n- Do not reveal exact code; any correct approach is acceptable.\nFormat:\n- Provide code or a short explanation of your fix.",
+          "bugged_code": "for(let i=1;i<5;i++){console.log(i)}",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the loop prints 1 through 5 inclusively in correct order. Return 0 otherwise. Do not reveal code." }
         },
         {
           "phase": 2,
           "task_type": "bugfix",
-          "prompt": "Promise resolves to 'built'. Ensure console logs 'built' (not a Promise).",
-          "bugged_code": "function build(){ return Promise.resolve('built'); } const out=build(); console.log(out);",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Ensure the solution awaits the Promise and logs 'built'. Do not give code; return 100 only if correct, else 0." }
+          "prompt": "Your goal:\n- Make sum(a,b) return a number synchronously so console.log(sum(2,3)) outputs 5.\nConstraints:\n- Do not reveal exact code; multiple correct solutions allowed.\nFormat:\n- Provide code or a short explanation of your change.",
+          "bugged_code": "function sum(a,b){ return Promise.resolve(a+b); } console.log(sum(2,3));",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the function directly returns the correct sum as a number. Return 0 otherwise." }
         },
         {
           "phase": 3,
           "task_type": "bugfix",
-          "prompt": "Only when mode is 'safe' should we return true. Fix the conditional logic.",
-          "bugged_code": "function isSafe(mode){ if (mode = 'safe') return true; return false }",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Check that strict comparison is used and behavior matches the criteria. Only return 100 or 0." }
+          "prompt": "Your goal:\n- Return true only when status === 'armed'; otherwise false.\nConstraints:\n- Use a correct equality check; do not mutate inputs.\nFormat:\n- Provide code or a short explanation.",
+          "bugged_code": "function isArmed(status){ if(status='armed'){return true;} return false; }",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the conditional checks equality correctly and only returns true when status is 'armed'. Return 0 otherwise." }
         },
         {
           "phase": 4,
           "task_type": "bugfix",
-          "prompt": "Wire a button#ignite so clicking it logs 'ignite!' (no immediate execution).",
-          "bugged_code": "<button id='ignite'></button>",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Validate that a click handler is attached properly without immediate execution. 100 or 0 only." }
+          "prompt": "Your goal:\n- Bind a click handler so clicking #launch logs 'launched'.\nConstraints:\n- Must not log at page load (no immediate execution).\nFormat:\n- Provide the minimal code or a short explanation.",
+          "bugged_code": "<button id='launch'></button>",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if a proper click handler is bound and logs 'launched' only upon click. Return 0 otherwise." }
         },
         {
           "phase": 5,
           "task_type": "build",
-          "prompt": "Merge defaults with overrides immutably (do not mutate defaults).",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Confirm an immutable merge (no mutation of defaults). Reply 100 if correct, else 0." }
+          "prompt": "Your goal:\n- Merge defaults with overrides into a new object.\nConstraints:\n- Do not mutate defaults; result reflects overrides.\nFormat:\n- Provide code or a short explanation.",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if defaults remain unchanged and overrides are applied immutably. Return 0 otherwise." }
         }
       ]
     },
@@ -58,33 +58,32 @@
         {
           "phase": 1,
           "task_type": "creative-hint",
-          "prompt": "Given this lyric, hint at the song and artist without naming them. The player must infer.",
-          "lyric": "Is this the real life? Is this just fantasy?",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Ensure hints do not reveal titles or artists; only validate that the player's explanation clearly identifies the correct song and artist without stating them outright. Return 100 if clearly correct, else 0." }
+          "prompt": "Your goal:\n- Give a playful hint for a classic rock anthem that begins with a piano ballad and questions reality vs. fantasy.\nConstraints:\n- Do NOT name the song or artist; no spoilers.\nFormat:\n- One-sentence hint only.",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the hint indirectly and clearly refers to the correct song/artist. Return 0 otherwise." }
         },
         {
           "phase": 2,
           "task_type": "creative-hint",
-          "prompt": "Riddle-like hint for a 2012 EDM hit featuring a British singer. Player must deduce title and artist.",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Validate deduction quality without revealing names. 100 if clearly correct, else 0." }
+          "prompt": "Your goal:\n- Hint at a 2010s EDM/Pop mega-hit known for a viral catchphrase.\nConstraints:\n- Do NOT use the title or artist directly.\nFormat:\n- One-sentence hint only.",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the hint clearly points to the correct track indirectly. Return 0 otherwise." }
         },
         {
           "phase": 3,
           "task_type": "creative-hint",
-          "prompt": "Spanish global hit hinting challenge (do not state the title).",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "As above. 100 if the player's explanation indicates the correct song/artist without direct naming; else 0." }
+          "prompt": "Your goal:\n- Provide a clue for a Spanish-language global hit that once held YouTube's most-views record.\nConstraints:\n- Do NOT say the title or singer.\nFormat:\n- One-sentence hint only.",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the hint indirectly identifies the correct global hit. Return 0 otherwise." }
         },
         {
           "phase": 4,
           "task_type": "creative-hint",
-          "prompt": "K-pop viral dance track hinting challenge.",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "As above." }
+          "prompt": "Your goal:\n- Give a fun clue for a K-pop song famous for a horse-riding dance.\nConstraints:\n- Do NOT say the title or artist.\nFormat:\n- One-sentence hint only.",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the clue indirectly conveys the correct song. Return 0 otherwise." }
         },
         {
           "phase": 5,
           "task_type": "creative-hint",
-          "prompt": "Provide a safe, non-verbatim hint for a popular alt-pop song. Player must infer which.",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "As above." }
+          "prompt": "Your goal:\n- Create a riddle-like clue for an alt-pop anthem about staying in the spotlight.\nConstraints:\n- Do NOT name the track directly.\nFormat:\n- One-sentence hint only.",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the clue indirectly identifies the correct alt-pop hit. Return 0 otherwise." }
         }
       ]
     },
@@ -98,32 +97,32 @@
         {
           "phase": 1,
           "task_type": "recursion-two-part",
-          "prompt": "Provide TWO separate, correct recursive answers: (A) sumDigits(n) for n=942=>15; (B) stairs(n) ways with steps of 1 or 2 (stairs(5)=>8).",
-          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 only if BOTH (A) and (B) are correct and well-justified without dumping exact code. Otherwise return 0." }
+          "prompt": "Your goal:\n- (A) Define a recursive function that sums digits of n.\n- (B) Define a recursive function counting ways to climb n with 1 or 2 steps.\nConstraints:\n- Provide conceptual or code answer; correctness over style.\nFormat:\n- Label parts clearly: A) ... B) ...",
+          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 if both recursive answers are valid and correct. Return 0 otherwise." }
         },
         {
           "phase": 2,
           "task_type": "recursion-two-part",
-          "prompt": "(A) flatten([1,[2,[3]],4]) => [1,2,3,4]; (B) maxDepth({v:1,child:{v:2}})=>2 and maxDepth(null)=>0.",
-          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Both parts correct => 100, else 0." }
+          "prompt": "Your goal:\n- (A) Recursively flatten a nested array.\n- (B) Recursively compute max depth of a nested object; null => 0.\nConstraints:\n- Conceptual or code ok.\nFormat:\n- Label parts: A) ... B) ...",
+          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 if both solutions are correct. Return 0 otherwise." }
         },
         {
           "phase": 3,
           "task_type": "recursion-two-part",
-          "prompt": "(A) paren(2) => ['(())','()()']; (B) sumDigits(9)=>9.",
-          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Both parts correct => 100, else 0." }
+          "prompt": "Your goal:\n- (A) Generate all valid parentheses for n=3.\n- (B) Recursively compute sumDigits(99).\nConstraints:\n- Conceptual or code ok.\nFormat:\n- Label parts: A) ... B) ...",
+          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 if both recursive tasks are solved correctly. Return 0 otherwise." }
         },
         {
           "phase": 4,
           "task_type": "recursion-two-part",
-          "prompt": "(A) Define base case for recursion over nested objects; (B) show one example input/output.",
-          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Require both base case explanation and example to be correct => 100, else 0." }
+          "prompt": "Your goal:\n- (A) Explain the base case for recursion on nested arrays.\n- (B) Provide one working input and output example.\nConstraints:\n- Keep answers concise and precise.\nFormat:\n- Label parts: A) ... B) ...",
+          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 if both explanation and example are correct. Return 0 otherwise." }
         },
         {
           "phase": 5,
           "task_type": "recursion-two-part",
-          "prompt": "(A) Explain why naive stairs recursion is exponential; (B) provide memoized complexity big-O.",
-          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Both conceptual answers correct => 100, else 0." }
+          "prompt": "Your goal:\n- (A) Explain why naive recursion for Fibonacci is exponential time.\n- (B) State memoized time complexity.\nConstraints:\n- Be concise.\nFormat:\n- Label parts: A) ... B) ...",
+          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 if both conceptual answers are correct. Return 0 otherwise." }
         }
       ]
     },
@@ -137,12 +136,12 @@
         {
           "phase": 1,
           "task_type": "poison-code",
-          "prompt": "Start with perfect XSS-safe render; poison it by introducing bugs.",
+          "prompt": "Your goal:\n- Start with safe DOM rendering, then poison it by making it vulnerable.\nConstraints:\n- Introduce distinct, real issues; avoid duplicates.\nFormat:\n- Provide code showing changes or list them clearly.",
           "perfect_code": "function showSafe(text){ const el=document.getElementById('out'); el.textContent=text; }",
           "validator": {
             "type": "ai_score",
             "scheme": "attack_10_bugs",
-            "guidance": "Count distinct security-smelling issues introduced (e.g., innerHTML injection, eval usage, removed escaping). Return count*10, capped at 100.",
+            "guidance": "Count distinct unsafe changes. Score=count*10 capped at 100. Return only the number.",
             "bug_catalog": [
               { "name": "innerHTML_injection", "pattern": "innerHTML" },
               { "name": "unsafe_eval", "pattern": "eval(" },
@@ -153,30 +152,30 @@
         {
           "phase": 2,
           "task_type": "poison-code",
-          "prompt": "Password check is constant-time; poison it with timing leak or weak compare.",
+          "prompt": "Your goal:\n- Start with a secure password compare, then poison it with timing leaks or weak equality.\nConstraints:\n- Each distinct flaw counts once.\nFormat:\n- Provide code or list changes.",
           "perfect_code": "function eq(a,b){ /* constant-time compare; do not leak */ }",
-          "validator": { "type": "ai_score", "scheme": "attack_10_bugs", "guidance": "Count distinct timing/logic weaknesses added.", "bug_catalog": [ { "name": "early_return", "pattern": "return false" }, { "name": "loose_compare", "pattern": "==" } ] }
+          "validator": { "type": "ai_score", "scheme": "attack_10_bugs", "guidance": "Count timing or compare flaws introduced. Score=count*10 capped at 100. Return only the number.", "bug_catalog": [ { "name": "early_return", "pattern": "return false" }, { "name": "loose_compare", "pattern": "==" } ] }
         },
         {
           "phase": 3,
           "task_type": "poison-code",
-          "prompt": "Make parameterized SQL unsafe via concatenation.",
+          "prompt": "Your goal:\n- Start with a parameterized SQL query and poison it by making it unsafe.\nConstraints:\n- Show string concatenation or template injection.\nFormat:\n- Provide code or list changes.",
           "perfect_code": "function queryUser(db,name){ return db.query('SELECT * FROM users WHERE name=?',[name]); }",
-          "validator": { "type": "ai_score", "scheme": "attack_10_bugs", "guidance": "Count concat patterns.", "bug_catalog": [ { "name": "plus_concat", "pattern": "+ name" }, { "name": "template_concat", "pattern": "${name}" } ] }
+          "validator": { "type": "ai_score", "scheme": "attack_10_bugs", "guidance": "Count query concatenations. Score=count*10 capped at 100. Return only the number.", "bug_catalog": [ { "name": "plus_concat", "pattern": "+ name" }, { "name": "template_concat", "pattern": "${name}" } ] }
         },
         {
           "phase": 4,
           "task_type": "poison-code",
-          "prompt": "Make email validator permissive.",
+          "prompt": "Your goal:\n- Start with strict email validation and poison it by making it too permissive.\nConstraints:\n- Distinct permissive changes count.\nFormat:\n- Provide code or list changes.",
           "perfect_code": "const isEmail=s=>/^[\\w.-]+@[\\w.-]+\\.[A-Za-z]{2,}$/.test(s);",
-          "validator": { "type": "ai_score", "scheme": "attack_10_bugs", "guidance": "Count permissive changes.", "bug_catalog": [ { "name": "over_permissive", "pattern": "/.*/" }, { "name": "always_true", "pattern": "return true" } ] }
+          "validator": { "type": "ai_score", "scheme": "attack_10_bugs", "guidance": "Count changes that allow bad inputs. Score=count*10 capped at 100. Return only the number.", "bug_catalog": [ { "name": "over_permissive", "pattern": "/.*/" }, { "name": "always_true", "pattern": "return true" } ] }
         },
         {
           "phase": 5,
           "task_type": "poison-code",
-          "prompt": "Break 'Hello, World!' in any way.",
+          "prompt": "Your goal:\n- Corrupt the 'Hello, World!' program in unique ways to break or alter it.\nConstraints:\n- Distinct corruptions count; avoid duplicates.\nFormat:\n- Provide code or bullet list.",
           "perfect_code": "console.log('Hello, World!');",
-          "validator": { "type": "ai_score", "scheme": "attack_10_bugs", "guidance": "Count ways output deviates; map issues to points up to 100." }
+          "validator": { "type": "ai_score", "scheme": "attack_10_bugs", "guidance": "Count distinct corruptions of the program. Score=count*10 capped at 100. Return only the number." }
         }
       ]
     },
@@ -190,37 +189,37 @@
         {
           "phase": 1,
           "task_type": "inspect",
-          "prompt": "Find the hidden question in the page source comments and answer it (do not paste the question).",
-          "hidden_html": "<!-- Q: 1+1? -->",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Validate the final numeric or textual answer to the hidden question without revealing it. Return 100 or 0." }
+          "prompt": "Your goal:\n- Check hidden HTML comments for a simple question, then answer only that question.\nConstraints:\n- Do not paste hidden text; respond with the answer only.\nFormat:\n- Provide the final answer only.",
+          "hidden_html": "<!-- Q: 2+2? -->",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the provided answer is correct. Return 0 otherwise. Do not reveal the hidden question." }
         },
         {
           "phase": 2,
           "task_type": "inspect",
-          "prompt": "A span holds the question but is visually hidden. Find & answer it.",
-          "hidden_html": "<span class='secret' style='display:none'>What is 3×3?</span>",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "As above." }
+          "prompt": "Your goal:\n- Find the visually hidden question inside a span and answer it.\nConstraints:\n- Do not paste the hidden prompt.\nFormat:\n- Provide the final answer only.",
+          "hidden_html": "<span class='secret' style='display:none'>What is 5*2?</span>",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the answer is correct. Return 0 otherwise." }
         },
         {
           "phase": 3,
           "task_type": "decode",
-          "prompt": "Decode the Base64 string to reveal the question.",
-          "hidden_data": "V2hhdCBpcyAyICsgMj8=",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Validate answer correctness; do not reveal content. 100/0 only." }
+          "prompt": "Your goal:\n- Decode the Base64 string and answer the revealed question.\nConstraints:\n- Do not paste the decoded text.\nFormat:\n- Provide the final answer only.",
+          "hidden_data": "V2hhdCBpcyA0ICsgNA==",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the decoded question is answered correctly. Return 0 otherwise." }
         },
         {
           "phase": 4,
           "task_type": "deobfuscate",
-          "prompt": "This code builds a question string. Deobfuscate and answer.",
-          "hidden_js": "String.fromCharCode(53,43,55)",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "As above." }
+          "prompt": "Your goal:\n- Deobfuscate the string-building code and answer the question.\nConstraints:\n- Do not paste the constructed text.\nFormat:\n- Provide the final answer only.",
+          "hidden_js": "String.fromCharCode(54,43,50)",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the correct answer is given. Return 0 otherwise." }
         },
         {
           "phase": 5,
           "task_type": "data-attr",
-          "prompt": "A div has data-q with an encoded math expression. Find it and solve.",
-          "hidden_html": "<div id='c' data-q='MTAKNSsx'></div>",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "As above." }
+          "prompt": "Your goal:\n- Inspect the data-q attribute to find the encoded math question and answer it.\nConstraints:\n- Do not paste the encoded or decoded text.\nFormat:\n- Provide the final answer only.",
+          "hidden_html": "<div id='c' data-q='Nysz'></div>",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the answer is correct. Return 0 otherwise." }
         }
       ]
     },
@@ -229,12 +228,11 @@
       "id": "mysterious",
       "name": "Mysterious",
       "difficulty": "impossible",
-      "description": "???????????????????????????????????????????/",
+      "description": "????????????????????",
       "phases": [
         {
           "phase": 1,
           "task_type": "paradox",
-          "prompt": "????????????",
           "bait_question": "????????????",
           "hint": "Are you sure you can beat this? If not, what should you do?",
           "validator": { "type": "mysterious", "keywords": ["escape","run","quit","i forfeit","skip","gg"], "prompt_mask": "????????????" }

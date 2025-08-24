@@ -12,7 +12,7 @@ function getCharacterStats(roleId: string) {
     case 'bard':
       return { health: 150, attack: 100, specialty: 'Creative Writing & Music' };
     case 'necromancer':
-      return { health: 70, attack: 50, specialty: 'Dark Arts & Algorithms' };
+      return { health: 100, attack: 50, specialty: 'Dark Arts & Algorithms' };
     case 'alchemist':
       return { health: 100, attack: 10, specialty: 'Data Transformation' };
     case 'hacker':

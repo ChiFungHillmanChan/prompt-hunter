@@ -24,16 +24,16 @@ export default function ChatPanel({ role, phase }: Props) {
 
   const onSend = async () => {
     if (!apiKey || loading) return;
+    if (role.id === 'mysterious') {
+      setResp('????????????????????');
+      return;
+    }
     setLoading(true);
     try {
       const ctx = buildContext(role, phase) + '\n\n' + prompt;
       const res = await callGemini(apiKey, ctx);
       // Mask responses for Mysterious
-      if (role.id === 'mysterious') {
-        setResp('????????????????????');
-      } else {
-        setResp(res.text);
-      }
+      setResp(res.text);
       // usage tracking removed from UI
     } catch (err) {
       if (err instanceof GeminiError) {
