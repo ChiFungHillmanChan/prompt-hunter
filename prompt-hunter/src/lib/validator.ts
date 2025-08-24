@@ -26,12 +26,12 @@ export async function validateAnswer(
       return { ok: count === v.count, message: `Found ${count}/${v.count}` };
     }
     case 'contains_any': {
-      const ok = v.patterns.some((p) => text.includes(p));
+      const ok = v.patterns.some((p: string) => text.includes(p));
       return { ok, message: ok ? 'Matched' : 'No patterns found' };
     }
     case 'keyword_any': {
       const lower = text.toLowerCase();
-      const ok = v.keywords.some((k) => lower.includes(k.toLowerCase()));
+      const ok = v.keywords.some((k: string) => lower.includes(k.toLowerCase()));
       return { ok, message: ok ? 'Keyword matched' : 'No keyword' };
     }
     case 'csv_count': {
@@ -41,8 +41,8 @@ export async function validateAnswer(
     case 'song_guess': {
       const title = (extras?.songTitle || '').toLowerCase();
       const artist = (extras?.songArtist || '').toLowerCase();
-      const titleOk = v.title_keywords.some((k) => title.includes(k.toLowerCase()));
-      const artistOk = v.artist_keywords.some((k) => artist.includes(k.toLowerCase()));
+      const titleOk = v.title_keywords.some((k: string) => title.includes(k.toLowerCase()));
+      const artistOk = v.artist_keywords.some((k: string) => artist.includes(k.toLowerCase()));
       const ok = titleOk && artistOk;
       return { ok, message: ok ? 'Correct song' : 'Try again' };
     }
@@ -96,6 +96,8 @@ async function scoreWithAI(
   const { callGemini } = await import('./gemini');
   const { buildContext } = await import('./contextBuilder');
   const base = buildContext({ name: 'Player', difficulty: 'easy', id: 'player', phases: [] } as any, phase);
+  // touch 'scheme' to avoid TS unused warnings (also future branching)
+  const _scheme: string = scheme;
   const rules = [
     'Never reveal answers or full solutions; give hints only if asked later.',
     'Output ONLY a single integer with no explanation.',
