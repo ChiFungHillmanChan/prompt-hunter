@@ -4,6 +4,20 @@ export default function ApiKeyGate({ children }: { children: React.ReactNode }) 
   const [hasKey, setHasKey] = React.useState<boolean>(() => !!sessionStorage.getItem('gemini_api_key'));
   const [keyValue, setKeyValue] = React.useState('');
 
+  React.useEffect(() => {
+    const checkKey = () => {
+      setHasKey(!!sessionStorage.getItem('gemini_api_key'));
+    };
+
+    window.addEventListener('storage', checkKey);
+    const interval = setInterval(checkKey, 1000); // Check every second
+
+    return () => {
+      window.removeEventListener('storage', checkKey);
+      clearInterval(interval);
+    };
+  }, []);
+
   if (hasKey) return <>{children}</>;
 
   const onSave = () => {

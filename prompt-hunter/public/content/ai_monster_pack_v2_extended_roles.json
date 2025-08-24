@@ -1,18 +1,9 @@
 {
   "meta": {
-    "name": "ai_monster_pack_v2_extended_roles",
-    "created_utc": "2025-08-23T20:06:51.311229Z",
+    "name": "ai_monster_pack_v3_numeric_ai_schemes",
+    "created_utc": "2025-08-24T00:00:00.000Z",
     "phases_per_run": 5,
-    "monsters_per_phase_formula": "X = phase * base_monsters (default base_monsters=2)",
-    "validator_api_note": "Client should implement the validator 'type's referenced here.",
-    "roles_included": [
-      "engineer",
-      "bard",
-      "necromancer",
-      "alchemist",
-      "hacker",
-      "mysterious"
-    ]
+    "validator_api_note": "Validators include ai_score which must call an LLM and return ONLY a number as a string."
   },
   "roles": [
     {
@@ -24,172 +15,80 @@
         {
           "phase": 1,
           "task_type": "bugfix",
-          "prompt": "Fix the loop so it pushes exactly 3 '⚙️' into parts.",
+          "prompt": "Fix the loop so it pushes exactly 3 '⚙️' into parts without off-by-one errors.",
           "bugged_code": "const parts=[]; for (let i=1;i<=3;i++) { parts.push('⚙️'); } if(parts.length!==4){console.log('bad');}",
-          "success_criteria": "parts.length === 3",
-          "validator": {
-            "type": "js_eval",
-            "code": "(()=>{const parts=[]; for(let i=0;i<3;i++){parts.push('⚙️')} return parts.length===3;})()"
-          },
-          "hint": "Watch your loop bounds (start at 0, end before 3).",
-          "gemini_prompt": "Fix an off-by-one loop to push exactly 3 items into an array in JS."
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Verify the user's fix meets the prompt and does not reveal the exact code. Respond only with 100 for correct, else 0." }
         },
         {
           "phase": 2,
           "task_type": "bugfix",
-          "prompt": "The async builder logs a Promise. Make it log the resolved text 'built'.",
+          "prompt": "Promise resolves to 'built'. Ensure console logs 'built' (not a Promise).",
           "bugged_code": "function build(){ return Promise.resolve('built'); } const out=build(); console.log(out);",
-          "success_criteria": "Console shows 'built' (not [object Promise]).",
-          "validator": {
-            "type": "text_contains",
-            "value": "await build()"
-          },
-          "hint": "Use async/await or .then()",
-          "solution_sketch": "async function run(){ console.log(await build()); } run();",
-          "gemini_prompt": "Show how to await a Promise before logging the value in JS."
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Ensure the solution awaits the Promise and logs 'built'. Do not give code; return 100 only if correct, else 0." }
         },
         {
           "phase": 3,
           "task_type": "bugfix",
-          "prompt": "Only when mode is 'safe' should we return true.",
+          "prompt": "Only when mode is 'safe' should we return true. Fix the conditional logic.",
           "bugged_code": "function isSafe(mode){ if (mode = 'safe') return true; return false }",
-          "success_criteria": "isSafe('safe')===true, isSafe('boom')===false",
-          "validator": {
-            "type": "js_eval",
-            "code": "(()=>{function isSafe(mode){return mode==='safe'}; return isSafe('safe')===true && isSafe('boom')===false;})()"
-          },
-          "hint": "Use strict comparison, not assignment.",
-          "gemini_prompt": "Fix code using '=' in an if to use '==='."
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Check that strict comparison is used and behavior matches the criteria. Only return 100 or 0." }
         },
         {
           "phase": 4,
           "task_type": "bugfix",
-          "prompt": "Wire a button#ignite so clicking it logs 'ignite!'.",
-          "bugged_code": "<button id='ignite' onclick=\"console.log('nope')\"></button><script>document.getElementById('ignite').onclick = console.log('ignite!');</script>",
-          "success_criteria": "A click triggers a function; no immediate execution at load.",
-          "validator": {
-            "type": "dom_event_click_logs",
-            "selector": "#ignite",
-            "expected": "ignite!"
-          },
-          "hint": "Pass a function to the handler (or use addEventListener).",
-          "solution_sketch": "document.getElementById('ignite').addEventListener('click',()=>console.log('ignite!'));",
-          "gemini_prompt": "Attach a click handler without calling the function immediately."
+          "prompt": "Wire a button#ignite so clicking it logs 'ignite!' (no immediate execution).",
+          "bugged_code": "<button id='ignite'></button>",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Validate that a click handler is attached properly without immediate execution. 100 or 0 only." }
         },
         {
           "phase": 5,
           "task_type": "build",
-          "prompt": "Merge defaults with overrides immutably.",
-          "bugged_code": "const defaults={hp:10,spd:1}; const overrides={spd:2}; const cfg=Object.assign(defaults,overrides);",
-          "success_criteria": "defaults remains unchanged; cfg={hp:10,spd:2}.",
-          "validator": {
-            "type": "js_eval",
-            "code": "(()=>{const defaults={hp:10,spd:1}; const overrides={spd:2}; const cfg={...defaults,...overrides}; return defaults.spd===1 && cfg.spd===2 && cfg.hp===10;})()"
-          },
-          "hint": "Don't mutate defaults; use spread.",
-          "gemini_prompt": "Create a merged config without mutating the original in JS."
+          "prompt": "Merge defaults with overrides immutably (do not mutate defaults).",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Confirm an immutable merge (no mutation of defaults). Reply 100 if correct, else 0." }
         }
       ]
     },
+
     {
       "id": "bard",
       "name": "Bard",
       "difficulty": "easy",
-      "description": "Beats monsters with melody, memory, and music trivia. (Short lyric snippets only.)",
+      "description": "Beats monsters with melody, memory, and music trivia using clever hints instead of direct answers.",
       "phases": [
         {
           "phase": 1,
-          "task_type": "music-trivia",
-          "prompt": "Name the song & artist from this lyric:",
+          "task_type": "creative-hint",
+          "prompt": "Given this lyric, hint at the song and artist without naming them. The player must infer.",
           "lyric": "Is this the real life? Is this just fantasy?",
-          "success_criteria": "Title contains 'Bohemian Rhapsody' and artist includes 'Queen'.",
-          "validator": {
-            "type": "song_guess",
-            "title_keywords": [
-              "bohemian",
-              "rhapsody"
-            ],
-            "artist_keywords": [
-              "queen"
-            ]
-          },
-          "hint": "1975 rock opera by a British band.",
-          "gemini_prompt": "Identify the song and artist from the lyric given."
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Ensure hints do not reveal titles or artists; only validate that the player's explanation clearly identifies the correct song and artist without stating them outright. Return 100 if clearly correct, else 0." }
         },
         {
           "phase": 2,
-          "task_type": "music-trivia",
-          "prompt": "Name the song & artist from this lyric:",
-          "lyric": "Cause you are the piece of me I wish I didn't need",
-          "success_criteria": "Title includes 'Clarity' and artist includes 'Zedd' or 'Foxes'.",
-          "validator": {
-            "type": "song_guess",
-            "title_keywords": [
-              "clarity"
-            ],
-            "artist_keywords": [
-              "zedd",
-              "foxes"
-            ]
-          },
-          "hint": "2012 EDM anthem featuring Foxes.",
-          "gemini_prompt": "Which song has this lyric? Provide title and artist."
+          "task_type": "creative-hint",
+          "prompt": "Riddle-like hint for a 2012 EDM hit featuring a British singer. Player must deduce title and artist.",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Validate deduction quality without revealing names. 100 if clearly correct, else 0." }
         },
         {
           "phase": 3,
-          "task_type": "music-trivia",
-          "prompt": "Nombre la canción & artista de esta línea:",
-          "lyric": "Quiero respirar tu cuello despacito",
-          "success_criteria": "Title includes 'Despacito' and artist includes 'Luis Fonsi' or 'Daddy Yankee'.",
-          "validator": {
-            "type": "song_guess",
-            "title_keywords": [
-              "despacito"
-            ],
-            "artist_keywords": [
-              "luis",
-              "fonsi",
-              "daddy",
-              "yankee"
-            ]
-          },
-          "hint": "Latin pop global hit (2017).",
-          "gemini_prompt": "Identify the song and artist for this Spanish lyric."
+          "task_type": "creative-hint",
+          "prompt": "Spanish global hit hinting challenge (do not state the title).",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "As above. 100 if the player's explanation indicates the correct song/artist without direct naming; else 0." }
         },
         {
           "phase": 4,
-          "task_type": "music-trivia",
-          "prompt": "노래 제목과 가수를 맞히세요 (lyric):",
-          "lyric": "오빤 강남스타일",
-          "success_criteria": "Title includes 'Gangnam Style' and artist includes 'PSY'.",
-          "validator": {
-            "type": "song_guess",
-            "title_keywords": [
-              "gangnam",
-              "style"
-            ],
-            "artist_keywords": [
-              "psy"
-            ]
-          },
-          "hint": "K-pop viral dance track (2012).",
-          "gemini_prompt": "Name song and artist from the Korean lyric."
+          "task_type": "creative-hint",
+          "prompt": "K-pop viral dance track hinting challenge.",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "As above." }
         },
         {
           "phase": 5,
-          "task_type": "music-trivia-reverse",
-          "prompt": "Given the song, provide ANY single lyric line (<90 chars).",
-          "song": "Bad Guy — Billie Eilish",
-          "success_criteria": "Any non-empty line plausibly from the song (we won't auto-verify).",
-          "validator": {
-            "type": "manual_review",
-            "note": "Accept a short lyric line (<90 chars)."
-          },
-          "hint": "If unsure, hum onomatopoeia or cite a clean short line you remember.",
-          "gemini_prompt": "Give one short lyric line from 'Bad Guy' (<90 chars)."
+          "task_type": "creative-hint",
+          "prompt": "Provide a safe, non-verbatim hint for a popular alt-pop song. Player must infer which.",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "As above." }
         }
       ]
     },
+
     {
       "id": "necromancer",
       "name": "Necromancer",
@@ -198,432 +97,147 @@
       "phases": [
         {
           "phase": 1,
-          "task_type": "recursion",
-          "prompt": "Implement sumDigits(n): recursively sum digits. Example: 942 -> 15.",
-          "bugged_code": "function sumDigits(n){ if(n<10) return n; return sumDigits(Math.floor(n/10)); }",
-          "success_criteria": "sumDigits(942)===15; sumDigits(9)===9.",
-          "validator": {
-            "type": "js_eval",
-            "code": "(()=>{function sumDigits(n){return n<10?n: (n%10)+sumDigits(Math.floor(n/10));} return sumDigits(942)===15 && sumDigits(9)===9;})()"
-          },
-          "hint": "Use n%10 plus recurse on Math.floor(n/10).",
-          "gemini_prompt": "Write a recursive function to sum the digits of a number in JS."
+          "task_type": "recursion-two-part",
+          "prompt": "Provide TWO separate, correct recursive answers: (A) sumDigits(n) for n=942=>15; (B) stairs(n) ways with steps of 1 or 2 (stairs(5)=>8).",
+          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 only if BOTH (A) and (B) are correct and well-justified without dumping exact code. Otherwise return 0." }
         },
         {
           "phase": 2,
-          "task_type": "recursion",
-          "prompt": "flatten(arr): recursively flatten nested arrays. [1,[2,[3]],4] -> [1,2,3,4].",
-          "bugged_code": "function flatten(a){ return a.reduce((r,x)=>r.concat(x),[]) }",
-          "success_criteria": "Deep-nesting works.",
-          "validator": {
-            "type": "js_eval",
-            "code": "(()=>{function flatten(a){return a.reduce((r,x)=>r.concat(Array.isArray(x)?flatten(x):x),[]);} const out=flatten([1,[2,[3]],4]); return JSON.stringify(out)==='[1,2,3,4]';})()"
-          },
-          "hint": "Detect arrays and recurse.",
-          "gemini_prompt": "Recursively flatten a nested array in JS."
+          "task_type": "recursion-two-part",
+          "prompt": "(A) flatten([1,[2,[3]],4]) => [1,2,3,4]; (B) maxDepth({v:1,child:{v:2}})=>2 and maxDepth(null)=>0.",
+          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Both parts correct => 100, else 0." }
         },
         {
           "phase": 3,
-          "task_type": "recursion",
-          "prompt": "stairs(n): number of ways to climb n with 1 or 2 steps. stairs(5) -> 8.",
-          "bugged_code": "function stairs(n){ if(n<=2) return n; return stairs(n-1)+stairs(n-3);}",
-          "success_criteria": "stairs(5)===8, stairs(1)===1.",
-          "validator": {
-            "type": "js_eval",
-            "code": "(()=>{function stairs(n){return n<=2?n:stairs(n-1)+stairs(n-2);} return stairs(5)===8 && stairs(1)===1;})()"
-          },
-          "hint": "It’s Fibonacci-like: f(n)=f(n-1)+f(n-2).",
-          "gemini_prompt": "Compute ways to climb stairs with steps of 1 or 2."
+          "task_type": "recursion-two-part",
+          "prompt": "(A) paren(2) => ['(())','()()']; (B) sumDigits(9)=>9.",
+          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Both parts correct => 100, else 0." }
         },
         {
           "phase": 4,
-          "task_type": "recursion",
-          "prompt": "maxDepth(obj): nested objects have {v, child}. Return maximum depth.",
-          "bugged_code": "function maxDepth(o){ if(!o) return 0; return 1+maxDepth(o.child)}",
-          "success_criteria": "maxDepth({v:1,child:{v:2}})===2; maxDepth(null)===0.",
-          "validator": {
-            "type": "js_eval",
-            "code": "(()=>{function maxDepth(o){return o?1+maxDepth(o.child):0;} return maxDepth({v:1,child:{v:2}})===2 && maxDepth(null)===0;})()"
-          },
-          "hint": "Base case when object is null/undefined.",
-          "gemini_prompt": "Write a simple recursion to compute the depth of a linked object."
+          "task_type": "recursion-two-part",
+          "prompt": "(A) Define base case for recursion over nested objects; (B) show one example input/output.",
+          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Require both base case explanation and example to be correct => 100, else 0." }
         },
         {
           "phase": 5,
-          "task_type": "recursion",
-          "prompt": "paren(n): generate balanced parentheses for n=2 -> ['(())','()()'].",
-          "bugged_code": "function paren(n){ if(n===0) return ['']; return paren(n-1).map(s=>'('+s+')') }",
-          "success_criteria": "paren(2) returns ['(())','()()'] (order flexible).",
-          "validator": {
-            "type": "js_eval",
-            "code": "(()=>{function gen(n,l=0,r=0,s='',res=[]){ if(l===n&&r===n){res.push(s)}; if(l<n) gen(n,l+1,r,s+'(',res); if(r<l) gen(n,l,r+1,s+')',res); return res } const out=gen(2); return out.includes('(())')&&out.includes('()()')&&out.length===2;})()"
-          },
-          "hint": "Use backtracking with counts of left/right.",
-          "gemini_prompt": "Generate all balanced parentheses strings for given n."
+          "task_type": "recursion-two-part",
+          "prompt": "(A) Explain why naive stairs recursion is exponential; (B) provide memoized complexity big-O.",
+          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Both conceptual answers correct => 100, else 0." }
         }
       ]
     },
+
     {
       "id": "alchemist",
       "name": "Alchemist",
       "difficulty": "medium",
       "description": "Turns perfect code into poison. Intentionally introduce bugs/vulns—more bugs = more damage.",
-      "scoring": "Each triggered bug pattern adds +1 damage. Show a small meter on success.",
       "phases": [
         {
           "phase": 1,
           "task_type": "poison-code",
           "prompt": "Start with perfect XSS-safe render; poison it by introducing bugs.",
           "perfect_code": "function showSafe(text){ const el=document.getElementById('out'); el.textContent=text; }",
-          "bug_catalog": [
-            {
-              "name": "innerHTML_injection",
-              "pattern": "innerHTML",
-              "points": 1
-            },
-            {
-              "name": "unsafe_eval",
-              "pattern": "eval(",
-              "points": 1
-            },
-            {
-              "name": "missing_escape",
-              "pattern": ".textContent",
-              "negate": true,
-              "points": 1
-            }
-          ],
-          "success_criteria": "At least one bug pattern present.",
           "validator": {
-            "type": "contains_any",
-            "patterns": [
-              "innerHTML",
-              "eval("
+            "type": "ai_score",
+            "scheme": "attack_10_bugs",
+            "guidance": "Count distinct security-smelling issues introduced (e.g., innerHTML injection, eval usage, removed escaping). Return count*10, capped at 100.",
+            "bug_catalog": [
+              { "name": "innerHTML_injection", "pattern": "innerHTML" },
+              { "name": "unsafe_eval", "pattern": "eval(" },
+              { "name": "removed_textContent", "pattern": ".textContent", "negate": true }
             ]
-          },
-          "hint": "Swap textContent to innerHTML, or eval something… carefully.",
-          "gemini_prompt": "Suggest ways to turn a safe DOM render into an XSS-prone one (for a game)."
+          }
         },
         {
           "phase": 2,
           "task_type": "poison-code",
           "prompt": "Password check is constant-time; poison it with timing leak or weak compare.",
-          "perfect_code": "function eq(a,b){ if(a.length!==b.length) return false; let r=0; for(let i=0;i<a.length;i++){ r|=a.charCodeAt(i)^b.charCodeAt(i);} return r===0 }",
-          "bug_catalog": [
-            {
-              "name": "early_return_leak",
-              "pattern": "if(a[i]!==b[i]) return false",
-              "points": 1
-            },
-            {
-              "name": "loose_compare",
-              "pattern": "==",
-              "points": 1
-            },
-            {
-              "name": "subtle_length_skip",
-              "pattern": "a.length!==b.length",
-              "negate": true,
-              "points": 1
-            }
-          ],
-          "success_criteria": "Any listed bug added.",
-          "validator": {
-            "type": "contains_any",
-            "patterns": [
-              "return false",
-              "=="
-            ]
-          },
-          "hint": "Short-circuit on mismatch or use == somewhere.",
-          "gemini_prompt": "Turn a constant-time compare into a leaky one (educational, not for misuse)."
+          "perfect_code": "function eq(a,b){ /* constant-time compare; do not leak */ }",
+          "validator": { "type": "ai_score", "scheme": "attack_10_bugs", "guidance": "Count distinct timing/logic weaknesses added.", "bug_catalog": [ { "name": "early_return", "pattern": "return false" }, { "name": "loose_compare", "pattern": "==" } ] }
         },
         {
           "phase": 3,
           "task_type": "poison-code",
-          "prompt": "SQL builder uses parameters; poison it by concatenating raw user text.",
+          "prompt": "Make parameterized SQL unsafe via concatenation.",
           "perfect_code": "function queryUser(db,name){ return db.query('SELECT * FROM users WHERE name=?',[name]); }",
-          "bug_catalog": [
-            {
-              "name": "string_concat_sql",
-              "pattern": "'SELECT",
-              "points": 0
-            },
-            {
-              "name": "plus_concat",
-              "pattern": "+ name",
-              "points": 1
-            },
-            {
-              "name": "template_concat",
-              "pattern": "${name}",
-              "points": 1
-            }
-          ],
-          "success_criteria": "Evidence of string-concatenated SQL.",
-          "validator": {
-            "type": "contains_any",
-            "patterns": [
-              "+ name",
-              "${name}"
-            ]
-          },
-          "hint": "Build the SQL string manually instead of using placeholders.",
-          "gemini_prompt": "Show how concatenating user input harms SQL safety (for a game demo)."
+          "validator": { "type": "ai_score", "scheme": "attack_10_bugs", "guidance": "Count concat patterns.", "bug_catalog": [ { "name": "plus_concat", "pattern": "+ name" }, { "name": "template_concat", "pattern": "${name}" } ] }
         },
         {
           "phase": 4,
           "task_type": "poison-code",
-          "prompt": "Email validator is strict; poison it to accept obviously bad input.",
+          "prompt": "Make email validator permissive.",
           "perfect_code": "const isEmail=s=>/^[\\w.-]+@[\\w.-]+\\.[A-Za-z]{2,}$/.test(s);",
-          "bug_catalog": [
-            {
-              "name": "over_permissive",
-              "pattern": "/.*/",
-              "points": 1
-            },
-            {
-              "name": "missing_anchors",
-              "pattern": "^[",
-              "negate": true,
-              "points": 1
-            },
-            {
-              "name": "always_true",
-              "pattern": "return true",
-              "points": 1
-            }
-          ],
-          "success_criteria": "Regex becomes too permissive or function always returns true.",
-          "validator": {
-            "type": "contains_any",
-            "patterns": [
-              "/.*/",
-              "return true"
-            ]
-          },
-          "hint": "Loosen the regex or force-true.",
-          "gemini_prompt": "Make a strict email regex too permissive (for teaching)."
+          "validator": { "type": "ai_score", "scheme": "attack_10_bugs", "guidance": "Count permissive changes.", "bug_catalog": [ { "name": "over_permissive", "pattern": "/.*/" }, { "name": "always_true", "pattern": "return true" } ] }
         },
         {
           "phase": 5,
           "task_type": "poison-code",
-          "prompt": "Hardest: break the classic 'Hello, World!' so it doesn't print correctly.",
+          "prompt": "Break 'Hello, World!' in any way.",
           "perfect_code": "console.log('Hello, World!');",
-          "bug_catalog": [
-            {
-              "name": "typo_string",
-              "pattern": "Helo",
-              "points": 1
-            },
-            {
-              "name": "rename_console",
-              "pattern": "consle.log",
-              "points": 1
-            },
-            {
-              "name": "non_ascii_noise",
-              "pattern": "hsakfhijsadhfljhdlsjk",
-              "points": 1
-            }
-          ],
-          "success_criteria": "Output deviates from exact 'Hello, World!'.",
-          "validator": {
-            "type": "not_equals",
-            "value": "Hello, World!"
-          },
-          "hint": "Misspell, break console, or add random noise text.",
-          "gemini_prompt": "How to intentionally break a trivial print statement (toy exercise)."
+          "validator": { "type": "ai_score", "scheme": "attack_10_bugs", "guidance": "Count ways output deviates; map issues to points up to 100." }
         }
       ]
     },
+
     {
       "id": "hacker",
       "name": "Hacker",
       "difficulty": "hard",
-      "description": "Best played on a computer. Inspect elements, decode strings, reveal the easy question, answer it.",
+      "description": "Inspect, decode, reveal the easy question, answer it—without getting the answer directly from AI.",
       "phases": [
         {
           "phase": 1,
           "task_type": "inspect",
-          "prompt": "Find the hidden question in the page source comments and answer it.",
+          "prompt": "Find the hidden question in the page source comments and answer it (do not paste the question).",
           "hidden_html": "<!-- Q: 1+1? -->",
-          "success_criteria": "Answer equals 2.",
-          "validator": {
-            "type": "equals_number",
-            "value": 2
-          },
-          "hint": "View Source or Inspect → Elements.",
-          "gemini_prompt": "Where would a hidden HTML comment be, and how do I read it?"
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Validate the final numeric or textual answer to the hidden question without revealing it. Return 100 or 0." }
         },
         {
           "phase": 2,
           "task_type": "inspect",
           "prompt": "A span holds the question but is visually hidden. Find & answer it.",
           "hidden_html": "<span class='secret' style='display:none'>What is 3×3?</span>",
-          "success_criteria": "Answer equals 9.",
-          "validator": {
-            "type": "equals_number",
-            "value": 9
-          },
-          "hint": "Toggle element display in DevTools.",
-          "gemini_prompt": "How to reveal elements hidden with CSS display:none?"
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "As above." }
         },
         {
           "phase": 3,
           "task_type": "decode",
           "prompt": "Decode the Base64 string to reveal the question.",
           "hidden_data": "V2hhdCBpcyAyICsgMj8=",
-          "success_criteria": "Answer equals 4.",
-          "validator": {
-            "type": "equals_number",
-            "value": 4
-          },
-          "hint": "Use atob() in console or an online decoder.",
-          "gemini_prompt": "Decode a Base64 string in the browser console."
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Validate answer correctness; do not reveal content. 100/0 only." }
         },
         {
           "phase": 4,
           "task_type": "deobfuscate",
           "prompt": "This code builds a question string. Deobfuscate and answer.",
-          "hidden_js": "String.fromCharCode(53,43,55) // '5+7'",
-          "success_criteria": "Answer equals 12.",
-          "validator": {
-            "type": "equals_number",
-            "value": 12
-          },
-          "hint": "Evaluate the char codes.",
-          "gemini_prompt": "Turn char codes into a string in JS."
+          "hidden_js": "String.fromCharCode(53,43,55)",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "As above." }
         },
         {
           "phase": 5,
           "task_type": "data-attr",
           "prompt": "A div has data-q with an encoded math expression. Find it and solve.",
-          "hidden_html": "<div id='c' data-q='MTAKNSsx'></div> <!-- base64 of '10\\n5+1' or '10+5*1'? keep simple: '10+5' -->",
-          "success_criteria": "Answer equals 15.",
-          "validator": {
-            "type": "equals_number",
-            "value": 15
-          },
-          "hint": "Check dataset attributes via document.querySelector('#c').dataset.q, then decode.",
-          "gemini_prompt": "Read data-* attributes from the DOM and decode Base64."
+          "hidden_html": "<div id='c' data-q='MTAKNSsx'></div>",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "As above." }
         }
       ]
     },
+
     {
       "id": "mysterious",
       "name": "Mysterious",
       "difficulty": "impossible",
-      "description": "One-stage masquerading as five. Solving the puzzle = instant defeat. Only way to win: escape.",
-      "phaseBehavior": "one-stage-only",
-      "secretWinningInputs": [
-        "escape",
-        "run",
-        "quit",
-        "immediately win",
-        "win the game",
-        "i forfeit",
-        "skip",
-        "gg"
-      ],
+      "description": "???????????????????????????????????????????/",
       "phases": [
         {
           "phase": 1,
           "task_type": "paradox",
-          "prompt": "The Sphinx asks an unsolvable riddle. Do NOT solve it. Find a way to escape or win immediately.",
-          "bait_question": "Prove this statement is false.",
-          "success_criteria": "Input contains a winning keyword like 'escape' or 'win'.",
-          "validator": {
-            "type": "keyword_any",
-            "keywords": [
-              "escape",
-              "run",
-              "quit",
-              "immediately win",
-              "win the game",
-              "gg",
-              "skip"
-            ]
-          },
-          "hint": "Think outside the game. Refuse the premise.",
-          "gemini_prompt": "Suggest metagame commands to exit or win without solving the riddle."
-        },
-        {
-          "phase": 2,
-          "task_type": "paradox",
-          "prompt": "(Trap) The labyrinth deepens. Any attempt to solve kills you.",
-          "bait_question": "?????????????????????????????????????????????????????????? ",
-          "success_criteria": "Unwinnable. Treat like phase 1 (escape keywords).",
-          "validator": {
-            "type": "keyword_any",
-            "keywords": [
-              "escape",
-              "run",
-              "quit",
-              "immediately win",
-              "win the game",
-              "gg",
-              "skip"
-            ]
-          },
-          "hint": "Same as before—do not engage with the puzzle."
-        },
-        {
-          "phase": 3,
-          "task_type": "paradox",
-          "prompt": "(Trap) The oracle demands an answer you cannot know.",
-          "bait_question": "?????????????????????????????????????????????????????????? ",
-          "success_criteria": "Only escape keywords succeed.",
-          "validator": {
-            "type": "keyword_any",
-            "keywords": [
-              "escape",
-              "run",
-              "quit",
-              "immediately win",
-              "win the game",
-              "gg",
-              "skip"
-            ]
-          }
-        },
-        {
-          "phase": 4,
-          "task_type": "paradox",
-          "prompt": "(Trap) Time loops forever if you try to solve.",
-          "bait_question": "?????????????????????????????????????????????????????????? ",
-          "success_criteria": "Only escape keywords succeed.",
-          "validator": {
-            "type": "keyword_any",
-            "keywords": [
-              "escape",
-              "run",
-              "quit",
-              "immediately win",
-              "win the game",
-              "gg",
-              "skip"
-            ]
-          }
-        },
-        {
-          "phase": 5,
-          "task_type": "paradox",
-          "prompt": "(Trap) The void whispers: answers are deaths in disguise.",
-          "bait_question": "?????????????????????????????????????????????????????????? ",
-          "success_criteria": "Only escape keywords succeed.",
-          "validator": {
-            "type": "keyword_any",
-            "keywords": [
-              "escape",
-              "run",
-              "quit",
-              "immediately win",
-              "win the game",
-              "gg",
-              "skip"
-            ]
-          }
+          "prompt": "????????????",
+          "bait_question": "????????????",
+          "hint": "Are you sure you can beat this? If not, what should you do?",
+          "validator": { "type": "mysterious", "keywords": ["escape","run","quit","i forfeit","skip","gg"], "prompt_mask": "????????????" }
         }
       ]
     }

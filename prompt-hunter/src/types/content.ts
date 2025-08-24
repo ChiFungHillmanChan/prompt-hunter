@@ -9,7 +9,14 @@ export type Validator =
   | { type: 'csv_count'; count: number }
   | { type: 'song_guess'; title_keywords: string[]; artist_keywords: string[] }
   | { type: 'manual_review'; note?: string }
-  | { type: 'js_eval'; code: string };
+  | { type: 'js_eval'; code: string }
+  // AI numeric score validator; returns only a number string (e.g., '100' or '0')
+  | { type: 'ai_score'; scheme: 'attack_100_once' | 'attack_50_two_parts' | 'attack_10_bugs'; guidance: string; bug_catalog?: { name: string; pattern: string; negate?: boolean; points?: number }[] };
+
+// Special-case validator for the Mysterious role
+export type MysteriousValidator = { type: 'mysterious'; keywords: string[]; prompt_mask?: string; hint?: string };
+
+export type AnyValidator = Validator | MysteriousValidator;
 
 export interface Phase {
   phase: number;

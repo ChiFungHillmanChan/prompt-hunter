@@ -4,10 +4,10 @@ import { validateAnswer } from '../lib/validator';
 
 type Props = {
   phase: Phase;
-  onSuccess: () => void;
+  onScore: (score: number) => void;
 };
 
-export default function AnswerPanel({ phase, onSuccess }: Props) {
+export default function AnswerPanel({ phase, onScore }: Props) {
   const [text, setText] = React.useState('');
   const [songTitle, setSongTitle] = React.useState('');
   const [songArtist, setSongArtist] = React.useState('');
@@ -21,7 +21,8 @@ export default function AnswerPanel({ phase, onSuccess }: Props) {
     try {
       const res = await validateAnswer(phase, text, { songTitle, songArtist });
       setMsg(res.message);
-      if (res.ok) onSuccess();
+      const score = typeof res.score === 'number' ? res.score : (res.ok ? 100 : 0);
+      if (score > 0) onScore(score);
     } finally {
       setLoading(false);
     }

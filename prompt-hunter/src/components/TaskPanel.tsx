@@ -5,7 +5,7 @@ export default function TaskPanel({ phase }: { phase: Phase }) {
   const [showHint, setShowHint] = React.useState(false);
   return (
     <div className="p-3 bg-white/5 border border-white/10 rounded text-sm space-y-2">
-      <div className="font-semibold">Task</div>
+      <div className="font-semibold">Task — Read, fix, then submit your answer below.</div>
       <div className="whitespace-pre-wrap text-sm">{phase.prompt}</div>
       {phase.bugged_code && (
         <pre className="bg-black/40 border border-white/10 p-2 rounded overflow-x-auto text-xs"><code>{phase.bugged_code}</code></pre>
