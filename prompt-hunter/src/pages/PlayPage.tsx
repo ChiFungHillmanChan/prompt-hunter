@@ -33,7 +33,7 @@ export default function PlayPage() {
   const { t, language } = useTranslation();
   const role = useMemo(() => pack?.roles.find((r) => r.id === roleId) || null, [pack, roleId]);
   const phasesPerRun = role?.phases.length ?? defaultPhasesPerRun;
-  const characterStats = useMemo(() => (role ? getCharacterStats(role.id) : null), [role?.id]);
+  const characterStats = useMemo(() => (role ? getCharacterStats(role.id) : null), [role]);
   
   const [playerShaking, setPlayerShaking] = useState(false);
   const [monsterShaking, setMonsterShaking] = useState(false);
@@ -58,10 +58,12 @@ export default function PlayPage() {
         useSession.setState({ phaseIndex: savedPhase, playerHP: savedPlayerHP, maxMonsterHP: savedMaxMonsterHP });
         return;
       }
-    } catch {}
+    } catch {
+      // Failed to load saved progress
+    }
     const monsterHP = 100; // default per stage
     session.resetForRole(role.id, characterStats.health, monsterHP);
-  }, [role?.id]);
+  }, [role?.id, characterStats?.health]);
 
   // Attack countdown and damage effects
   const rafRef = useRef<number | null>(null);
@@ -82,7 +84,17 @@ export default function PlayPage() {
       lastRef.current = t;
       
       useSession.setState((s) => {
-        let next = s.nextAttackMs - dt;
+        const next = s.nextAttackMs - dt;
+        
+        // Check for monster damage within the state update
+        if (s.monsterHP < lastMonsterHP.current) {
+          setMonsterShaking(true);
+          setShowMonsterDamage(true);
+          setTimeout(() => setMonsterShaking(false), 300);
+          setTimeout(() => setShowMonsterDamage(false), 800);
+          lastMonsterHP.current = s.monsterHP;
+        }
+        
         if (next <= 0) {
           const newHp = Math.max(0, s.playerHP - settings.monsterDamagePerTick);
           
@@ -96,9 +108,14 @@ export default function PlayPage() {
           }
           
           if (newHp <= 0) {
-            push('error', 'Defeated — returning to Settings');
-            try { if (role) localStorage.removeItem(`ph-progress-${role.id}`); } catch {}
-            setTimeout(() => nav(ROUTES.ROOT), 800);
+            // Use refs or callbacks for push/nav to avoid dependency issues
+            setTimeout(() => {
+              try { if (role) localStorage.removeItem(`ph-progress-${role.id}`); } catch {
+                // Failed to remove saved progress
+              }
+              // Force a page reload to return to main menu
+              window.location.href = '/';
+            }, 800);
             return { ...s, playerHP: 0, running: false, nextAttackMs: settings.attackIntervalMs };
           }
           // Persist updated player HP mid-combat (monster attack tick)
@@ -114,20 +131,13 @@ export default function PlayPage() {
                 })
               );
             }
-          } catch {}
+          } catch {
+            // Failed to save progress
+          }
           return { ...s, playerHP: newHp, nextAttackMs: settings.attackIntervalMs };
         }
         return { ...s, nextAttackMs: next };
       });
-      
-      // Check for monster damage
-      if (session.monsterHP < lastMonsterHP.current) {
-        setMonsterShaking(true);
-        setShowMonsterDamage(true);
-        setTimeout(() => setMonsterShaking(false), 300);
-        setTimeout(() => setShowMonsterDamage(false), 800);
-        lastMonsterHP.current = session.monsterHP;
-      }
       
       rafRef.current = requestAnimationFrame(loop);
     };
@@ -312,7 +322,9 @@ export default function PlayPage() {
                                 playerHP: session.playerHP,
                               })
                             );
-                          } catch {}
+                          } catch {
+                            // Failed to save victory progress
+                          }
                         }
                       } else {
                         // Wrong or partial: -1 HP, reset to full if reaches 0
@@ -330,7 +342,9 @@ export default function PlayPage() {
                                 playerHP: session.playerHP,
                               })
                             );
-                          } catch {}
+                          } catch {
+                            // Failed to save mysterious progress
+                          }
                         } else {
                           useSession.setState({ monsterHP: decreased });
                           try {
@@ -343,7 +357,9 @@ export default function PlayPage() {
                                 playerHP: session.playerHP,
                               })
                             );
-                          } catch {}
+                          } catch {
+                            // Failed to save mysterious reset progress
+                          }
                         }
                       }
                       return;
@@ -383,7 +399,9 @@ export default function PlayPage() {
                               playerHP: session.playerHP,
                             })
                           );
-                        } catch {}
+                        } catch {
+                          // Failed to save phase progress
+                        }
                       }
                     } else {
                       useSession.setState({ monsterHP: newHp });
@@ -397,7 +415,9 @@ export default function PlayPage() {
                             playerHP: session.playerHP,
                           })
                         );
-                      } catch {}
+                      } catch {
+                        // Failed to save monster progress
+                      }
                     }
                   }}
                 />

@@ -6,7 +6,7 @@ type Usage = {
 
 export type GeminiResponse = { text: string; usage?: Usage };
 
-export const GEMINI_MODEL = 'gemini-1.5-flash';
+export const GEMINI_MODEL = 'gemini-2.5-flash-lite';
 
 export class GeminiError extends Error {
   status?: number;
@@ -79,10 +79,10 @@ async function callGeminiWithRetry(apiKey: string, text: string, maxRetries: num
       });
       
       if (!res.ok) {
-        let body: any = null;
+        let body: Record<string, unknown> | null = null;
         try {
           body = await res.json();
-        } catch (jsonError) {
+        } catch {
           // Could not parse error response as JSON
         }
         
@@ -99,9 +99,9 @@ async function callGeminiWithRetry(apiKey: string, text: string, maxRetries: num
           }
         }
         
-        const apiError = body?.error;
+        const apiError = body?.error as Record<string, unknown> | undefined;
         const code = apiError?.status || apiError?.code;
-        const message = apiError?.message || `Gemini HTTP ${res.status}: ${res.statusText}`;
+        const message = (apiError?.message as string) || `Gemini HTTP ${res.status}: ${res.statusText}`;
         const error = new GeminiError(message, { status: res.status, code: typeof code === 'string' ? code : undefined, retryAfterSeconds, raw: body });
         
         if (res.status === 429 && attempt < maxRetries) {
@@ -127,7 +127,7 @@ async function callGeminiWithRetry(apiKey: string, text: string, maxRetries: num
         throw new GeminiError('No parts in candidate content', { raw: data });
       }
       
-      const fullText = parts.map((p: any) => p?.text || '').join('\n');
+      const fullText = parts.map((p: Record<string, unknown>) => (p?.text as string) || '').join('\n');
       const usage: Usage | undefined = data?.usageMetadata ? {
         promptTokenCount: data.usageMetadata.promptTokenCount || 0,
         candidatesTokenCount: data.usageMetadata.candidatesTokenCount || 0,

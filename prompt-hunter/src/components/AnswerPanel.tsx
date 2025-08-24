@@ -29,9 +29,16 @@ export default function AnswerPanel({ phase, onScore }: Props) {
       else if (res.message === 'Invalid API key format') displayMessage = t('invalidApiKey');
       else if (res.message === 'Validation failed') displayMessage = t('validationError');
       
-      setMsg(displayMessage);
       const score = typeof res.score === 'number' ? res.score : (res.ok ? 100 : 0);
-      if (score > 0) onScore(score);
+      
+      // Handle score 0 case with special message
+      if (score === 0) {
+        displayMessage = t('attackFailed');
+      }
+      
+      setMsg(displayMessage);
+      // Always call onScore to return the score (number or 0)
+      onScore(score);
     } finally {
       setLoading(false);
     }

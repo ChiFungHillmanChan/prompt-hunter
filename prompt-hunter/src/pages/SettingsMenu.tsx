@@ -18,7 +18,7 @@ export default function SettingsMenu() {
   const [apiKey, setApiKey] = React.useState<string>(() => sessionStorage.getItem('gemini_api_key') || '');
   const [newApiKey, setNewApiKey] = React.useState('');
   const [showKeyInput, setShowKeyInput] = React.useState(false);
-  const [selectedCharacter, setSelectedCharacter] = React.useState<any>(null);
+  const [selectedCharacter, setSelectedCharacter] = React.useState<{ name: string; id: string; difficulty: string; description?: string } | null>(null);
 
   const onRemoveKey = () => {
     sessionStorage.removeItem('gemini_api_key');
@@ -41,7 +41,7 @@ export default function SettingsMenu() {
     setShowKeyInput(false);
   };
 
-  const onCharacterClick = (role: any) => {
+  const onCharacterClick = (role: { name: string; id: string; difficulty: string; description?: string }) => {
     setSelectedCharacter(role);
   };
 
@@ -53,6 +53,45 @@ export default function SettingsMenu() {
 
   const onCancelSelection = () => {
     setSelectedCharacter(null);
+  };
+
+  const hasCharacterProgress = (characterId: string) => {
+    // Check if character is completed
+    if (completedRoles.includes(characterId)) {
+      return true;
+    }
+    
+    // Check if character has stage progress in localStorage
+    try {
+      const raw = localStorage.getItem(`ph-progress-${characterId}`);
+      return raw !== null && raw !== undefined;
+    } catch {
+      return false;
+    }
+  };
+
+  const onRestartCharacter = (character: { name: string; id: string }) => {
+    if (confirm(settings.language === 'zh-hk' 
+      ? `確定要重新開始${character.name}嘅進度嗎？呢個操作會清除佢嘅所有階段進度。` 
+      : `Are you sure you want to restart ${character.name}? This will clear all stage progress for this character.`
+    )) {
+      // Clear character progress from localStorage
+      try {
+        localStorage.removeItem(`ph-progress-${character.id}`);
+      } catch {
+        // Failed to remove character progress
+      }
+      
+      // Reset completed role in progress store
+      useProgress.getState().resetRole(character.id);
+      
+      // Close modal and show success message
+      setSelectedCharacter(null);
+      alert(settings.language === 'zh-hk' 
+        ? `${character.name}嘅進度已重新開始！` 
+        : `${character.name} progress has been restarted!`
+      );
+    }
   };
 
   // Handle escape key to close modal
@@ -220,7 +259,7 @@ export default function SettingsMenu() {
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                  {pack.roles.map((r) => {
+                  {pack?.roles.map((r) => {
                     const won = completedRoles.includes(r.id);
                     const sprite = pickSprite(r.id);
                     let stageLabel: string | null = null;
@@ -231,7 +270,9 @@ export default function SettingsMenu() {
                         const idx = typeof saved?.phaseIndex === 'number' ? saved.phaseIndex : 0;
                         stageLabel = settings.language === 'zh-hk' ? `${t('stageLabel')}${idx + 1}${t('stageWithNumber')}` : `${t('stageLabel')} ${idx + 1}`;
                       }
-                    } catch {}
+                    } catch {
+                      // Failed to load character progress
+                    }
                     return (
                       <button
                         key={r.id}
@@ -256,7 +297,7 @@ export default function SettingsMenu() {
                         
                         <div className="flex items-center justify-between">
                           <div className="text-xs text-slate-400">
-                            {pack.meta.phases_per_run} {t('challenges')}
+                            {pack?.meta.phases_per_run || 5} {t('challenges')}
                           </div>
                           <div className="flex items-center gap-2">
                             {stageLabel && !won && (
@@ -280,7 +321,7 @@ export default function SettingsMenu() {
                   })}
                 </div>
                 
-                {pack.roles.every((r) => completedRoles.includes(r.id)) && (
+                {pack?.roles.every((r) => completedRoles.includes(r.id)) && (
                   <div className="text-center p-6 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl border border-yellow-500/30">
                     <div className="text-3xl mb-2">🏆</div>
                     <div className="text-xl font-bold text-white mb-1">{t('congratulations')}</div>
@@ -314,8 +355,8 @@ export default function SettingsMenu() {
                 style={{ imageRendering: 'pixelated' }} 
               />
               <h2 className="text-2xl font-bold text-white mb-2">{selectedCharacter.name}</h2>
-              <p className="text-slate-400 text-sm mb-1 capitalize">{t(selectedCharacter.difficulty as any)} {t('difficulty')}</p>
-              <p className="text-slate-300 text-sm leading-relaxed">{selectedCharacter.description}</p>
+              <p className="text-slate-400 text-sm mb-1 capitalize">{t(selectedCharacter.difficulty as keyof typeof import('../lib/translations').translations.en)} {t('difficulty')}</p>
+              <p className="text-slate-300 text-sm leading-relaxed">{selectedCharacter.description || ''}</p>
             </div>
 
             {/* Combat Stats */}
@@ -366,6 +407,14 @@ export default function SettingsMenu() {
               >
                 {t('startBattle')}
               </button>
+              {hasCharacterProgress(selectedCharacter.id) && (
+                <button
+                  onClick={() => onRestartCharacter(selectedCharacter)}
+                  className="px-4 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium transition-colors"
+                >
+                  {t('restartCharacter')}
+                </button>
+              )}
             </div>
           </div>
         </div>

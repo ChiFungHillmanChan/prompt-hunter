@@ -3,7 +3,9 @@ import { useProgress } from '../store/progress';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../lib/routes';
 import { useTranslation } from '../hooks/useTranslation';
+import { translations } from '../lib/translations';
 import { getCharacterStats } from '../lib/characterStats';
+import { useSettings } from '../store/settings';
 
 
 
@@ -49,6 +51,57 @@ export default function PackViewer() {
   const { pack } = useContent();
   const { completedRoles } = useProgress();
   const { t } = useTranslation();
+  const settings = useSettings();
+
+  // Show loading if pack is not available
+  if (!pack) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin text-6xl mb-4">⏳</div>
+          <p className="text-slate-400 text-lg">Loading characters...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  const hasCharacterProgress = (characterId: string) => {
+    // Check if character is completed
+    if (completedRoles.includes(characterId)) {
+      return true;
+    }
+    
+    // Check if character has stage progress in localStorage
+    try {
+      const raw = localStorage.getItem(`ph-progress-${characterId}`);
+      return raw !== null && raw !== undefined;
+    } catch {
+      return false;
+    }
+  };
+
+  const onRestartCharacter = (character: { name: string; id: string }) => {
+    if (confirm(settings.language === 'zh-hk' 
+      ? `確定要重新開始${character.name}嘅進度嗎？呢個操作會清除佢嘅所有階段進度。` 
+      : `Are you sure you want to restart ${character.name}? This will clear all stage progress for this character.`
+    )) {
+      // Clear character progress from localStorage
+      try {
+        localStorage.removeItem(`ph-progress-${character.id}`);
+      } catch {
+        // Failed to remove character progress
+      }
+      
+      // Reset completed role in progress store
+      useProgress.getState().resetRole(character.id);
+      
+      // Show success message
+      alert(settings.language === 'zh-hk' 
+        ? `${character.name}嘅進度已重新開始！` 
+        : `${character.name} progress has been restarted!`
+      );
+    }
+  };
   
   if (!pack) {
     return (
@@ -82,14 +135,14 @@ export default function PackViewer() {
 
         {/* Pack Info */}
         <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 mb-8">
-          <h2 className="text-xl font-bold text-white mb-4">📦 {pack.meta.name.replace(/_/g, ' ').toUpperCase()}</h2>
+          <h2 className="text-xl font-bold text-white mb-4">📦 {pack?.meta.name?.replace(/_/g, ' ').toUpperCase() || 'CHARACTER PACK'}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
             <div className="p-4 bg-blue-500/20 rounded-lg border border-blue-500/30">
-              <div className="text-2xl font-bold text-white">{pack.roles.length}</div>
+              <div className="text-2xl font-bold text-white">{pack?.roles.length || 0}</div>
               <div className="text-sm text-blue-300">{t('charactersAvailable')}</div>
             </div>
             <div className="p-4 bg-purple-500/20 rounded-lg border border-purple-500/30">
-              <div className="text-2xl font-bold text-white">{pack.meta.phases_per_run}</div>
+              <div className="text-2xl font-bold text-white">{pack?.meta.phases_per_run || 5}</div>
               <div className="text-sm text-purple-300">{t('phasesPerBattle')}</div>
             </div>
             <div className="p-4 bg-green-500/20 rounded-lg border border-green-500/30">
@@ -101,7 +154,7 @@ export default function PackViewer() {
 
         {/* Characters Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {pack.roles.map((role) => {
+          {pack?.roles.map((role) => {
             const stats = getCharacterStats(role.id);
             const gameTypes = getGameTypes(role.id);
             const sprite = pickSprite(role.id);
@@ -144,7 +197,7 @@ export default function PackViewer() {
                     </p>
                     
                     <div className="text-xs text-slate-400">
-                      {t('specialty')}: <span className="text-slate-300 font-medium">{t(stats.specialtyKey as any)}</span>
+                      {t('specialty')}: <span className="text-slate-300 font-medium">{t(stats.specialtyKey as keyof typeof translations.en)}</span>
                     </div>
                   </div>
                 </div>
@@ -170,13 +223,13 @@ export default function PackViewer() {
                         key={index} 
                         className="px-2 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-md text-xs font-medium"
                       >
-                        {t(typeKey as any)}
+                        {t(typeKey as keyof typeof translations.en)}
                       </span>
                     ))}
                   </div>
                 </div>
 
-                {/* Action Button */}
+                {/* Action Buttons */}
                 <div className="flex gap-3">
                   <Link
                     to={ROUTES.PLAY(role.id)}
@@ -188,6 +241,14 @@ export default function PackViewer() {
                   >
                     {isCompleted ? t('challengeAgain') : t('enterBattle')}
                   </Link>
+                  {hasCharacterProgress(role.id) && (
+                    <button
+                      onClick={() => onRestartCharacter(role)}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white text-sm font-medium transition-colors"
+                    >
+                      {t('restartCharacter')}
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -195,7 +256,7 @@ export default function PackViewer() {
         </div>
 
         {/* Victory Banner */}
-        {pack.roles.every((r) => completedRoles.includes(r.id)) && (
+        {pack?.roles.every((r) => completedRoles.includes(r.id)) && (
           <div className="mt-8 text-center p-8 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl border border-yellow-500/30">
             <div className="text-6xl mb-4">👑</div>
             <div className="text-3xl font-bold text-white mb-2">{t('masterAllCharactersTitle')}</div>

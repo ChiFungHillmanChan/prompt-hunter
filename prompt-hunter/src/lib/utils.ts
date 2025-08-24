@@ -7,7 +7,9 @@ export async function loadJSON<T = unknown>(url: string): Promise<T> {
 export function saveLocal<T>(key: string, value: T): void {
   try {
     localStorage.setItem(key, JSON.stringify(value));
-  } catch {}
+  } catch {
+    // localStorage not available
+  }
 }
 
 export function loadLocal<T>(key: string, fallback: T): T {
@@ -22,7 +24,9 @@ export function loadLocal<T>(key: string, fallback: T): T {
 export function saveSession<T>(key: string, value: T): void {
   try {
     sessionStorage.setItem(key, JSON.stringify(value));
-  } catch {}
+  } catch {
+    // sessionStorage not available
+  }
 }
 
 export function loadSession<T>(key: string, fallback: T): T {

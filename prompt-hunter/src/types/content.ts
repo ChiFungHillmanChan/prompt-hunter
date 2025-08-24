@@ -21,7 +21,9 @@ export type AnyValidator = Validator | MysteriousValidator;
 export interface Phase {
   phase: number;
   task_type: string;
-  prompt: string;
+  question?: string; // Question shown to user
+  prompt?: string; // AI guidance (old prompt field, now for AI context)
+  assistant?: string; // AI assistant message to user
   hint?: string;
   bugged_code?: string;
   perfect_code?: string;

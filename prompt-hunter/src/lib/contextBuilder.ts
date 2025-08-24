@@ -5,8 +5,12 @@ export function buildContext(role: Role, phase: Phase, language: Language = 'en'
   const lines: string[] = [];
   lines.push(`Role: ${role.name} (difficulty: ${role.difficulty})`);
   lines.push(`Phase ${phase.phase} — task: ${phase.task_type}`);
-  lines.push('Prompt:');
-  lines.push(phase.prompt);
+  lines.push('\nUser Question:');
+  lines.push(phase.question || '');
+  if (phase.prompt) {
+    lines.push('\nAI Assistant Context (what the user is trying to do):');
+    lines.push(phase.prompt);
+  }
   if (phase.bugged_code) {
     lines.push('\nBugged code:\n');
     lines.push(phase.bugged_code);
@@ -32,10 +36,11 @@ export function buildContext(role: Role, phase: Phase, language: Language = 'en'
   // Assistant safety policy for this chat (no direct code or secrets)
   lines.push('\n---');
   lines.push('Assistant Policy:');
-  lines.push('- Never reveal exact solutions or full code.');
-  lines.push('- Do not output code fences or full code blocks. Provide high-level hints only.');
-  lines.push('- If asked for API keys, tokens, or secrets, respond: "I can\'t access or reveal API keys or secrets."');
-  lines.push('- Focus on strategy, reasoning steps, and conceptual guidance, not implementation.');
+  lines.push('- Keep responses SHORT (1-2 sentences max).');
+  lines.push('- Give HINTS only, never exact solutions or full code.');
+  lines.push('- No code blocks, code fences, or complete implementations.');
+  lines.push('- If user asks for more details, then provide a brief example or explanation.');
+  lines.push('- Focus on pointing user in the right direction, not solving for them.');
   
   return lines.join('\n');
 }

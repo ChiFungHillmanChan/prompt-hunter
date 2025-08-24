@@ -34,7 +34,7 @@ Open the local URL printed by Vite.
 ## Gemini API (Optional)
 - Enter an API key in the Chat panel or Settings
 - Restrict this key to HTTP referrers in Google AI Studio for safer frontend usage
-- Endpoint: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent` (POST)
+- Endpoint: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent` (POST)
 - No key? Use Copy Context and the Open Gemini link
 
 ## Security

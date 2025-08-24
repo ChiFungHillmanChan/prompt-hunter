@@ -7,14 +7,16 @@ export default function TaskPanel({ phase, roleId }: { phase: Phase; roleId: str
   const { t } = useTranslation();
   const toast = useToast();
   const [showHint, setShowHint] = React.useState(false);
-  const visiblePrompt = React.useMemo(() => phase?.prompt || phase?.bait_question || '', [phase?.prompt, phase?.bait_question]);
+  const visiblePrompt = React.useMemo(() => phase?.question || phase?.bait_question || '', [phase?.question, phase?.bait_question]);
   const canCopyCode = roleId === 'engineer' || roleId === 'alchemist';
   const onCopy = async (text: string) => {
     let ok = false;
     try {
       await navigator.clipboard.writeText(text);
       ok = true;
-    } catch {}
+    } catch {
+      // Clipboard API not available
+    }
     if (!ok) {
       try {
         const ta = document.createElement('textarea');
@@ -26,7 +28,9 @@ export default function TaskPanel({ phase, roleId }: { phase: Phase; roleId: str
         ta.select();
         ok = document.execCommand('copy');
         document.body.removeChild(ta);
-      } catch {}
+      } catch {
+        // Fallback copy failed
+      }
     }
     if (ok) toast.push('success', t('copied')); else toast.push('error', 'Copy failed');
   };

@@ -110,6 +110,8 @@ export const translations = {
     noApiKey: "API key required for validation",
     invalidApiKey: "Invalid API key format",
     validationError: "Validation failed",
+    attackFailed: "Attack failed, Ask AI assistant to check the error!",
+    hackerAiMessage: "Use computer and act as a hacker",
 
     // Pack Viewer
     characterCodex: "Character Codex",
@@ -125,6 +127,7 @@ export const translations = {
     enterBattle: "⚔️ Enter Battle",
     masterAllCharactersTitle: "Master of All Characters!",
     masterAllCharactersSubtitle: "You've conquered every challenge in this realm.",
+    restartCharacter: "🔄 Restart Character",
 
     // Pack Viewer - Game Types
     typeDebugCode: "🐛 Debug Code",
@@ -245,6 +248,8 @@ export const translations = {
     noApiKey: "驗證需要 API 密鑰，請喺 Settings 頁面連接 AI 助手",
     invalidApiKey: "API 密鑰格式無效，請喺 Settings 頁面連接正確的 AI 助手",
     validationError: "驗證失敗",
+    attackFailed: "攻擊失敗，請搵 AI 助手檢查錯誤！",
+    hackerAiMessage: "用電腦扮演黑客",
 
     // Pack Viewer
     characterCodex: "角色圖鑑",
@@ -260,6 +265,7 @@ export const translations = {
     enterBattle: "⚔️ 進入戰鬥",
     masterAllCharactersTitle: "所有角色大師！",
     masterAllCharactersSubtitle: "你已經征服咗呢個世界嘅每個挑戰。",
+    restartCharacter: "🔄 重新開始角色",
 
     // Pack Viewer - Game Types
     typeDebugCode: "🐛 除錯程式碼",

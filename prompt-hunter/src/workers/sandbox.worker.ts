@@ -7,14 +7,14 @@ self.onmessage = async (ev: MessageEvent<Msg>) => {
   const { code, input } = ev.data;
   try {
     // Disable network/DOM-related globals
-    // @ts-ignore
-    (self as any).fetch = undefined;
-    // @ts-ignore
-    ;(self as any).XMLHttpRequest = undefined;
-    // @ts-ignore
-    ;(self as any).WebSocket = undefined;
-    // @ts-ignore
-    ;(self as any).importScripts = undefined;
+    // @ts-expect-error Disabling worker globals
+    (self as DedicatedWorkerGlobalScope & typeof globalThis).fetch = undefined;
+    // @ts-expect-error Disabling worker globals
+    ;(self as DedicatedWorkerGlobalScope & typeof globalThis).XMLHttpRequest = undefined;
+    // @ts-expect-error Disabling worker globals
+    ;(self as DedicatedWorkerGlobalScope & typeof globalThis).WebSocket = undefined;
+    // @ts-expect-error Disabling worker globals
+    ;(self as DedicatedWorkerGlobalScope & typeof globalThis).importScripts = undefined;
     const runner = new Function(
       'input',
       `'use strict';
@@ -42,15 +42,15 @@ self.onmessage = async (ev: MessageEvent<Msg>) => {
     ]);
     // Only booleans pass
     if (typeof result === 'boolean') {
-      // @ts-ignore
-      (self as unknown as Worker).postMessage({ ok: result });
+      // @ts-expect-error Worker messaging
+      (self as DedicatedWorkerGlobalScope).postMessage({ ok: result });
     } else {
-      // @ts-ignore
-      (self as unknown as Worker).postMessage({ ok: false, error: 'Non-boolean result' });
+      // @ts-expect-error Worker messaging
+      (self as DedicatedWorkerGlobalScope).postMessage({ ok: false, error: 'Non-boolean result' });
     }
-  } catch (e: any) {
-    // @ts-ignore
-    (self as unknown as Worker).postMessage({ ok: false, error: String(e?.message || e) });
+  } catch (e: unknown) {
+    // @ts-expect-error Worker messaging
+    (self as DedicatedWorkerGlobalScope).postMessage({ ok: false, error: String((e as Error)?.message || e) });
   }
 };
 

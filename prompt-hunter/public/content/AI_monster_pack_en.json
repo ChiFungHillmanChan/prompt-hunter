@@ -15,40 +15,54 @@
         {
           "phase": 1,
           "task_type": "bugfix",
-          "prompt": "Your goal:\n- Fix the loop so it prints numbers 1 through 5 (inclusive) in order.\nConstraints:\n- Do not reveal exact code; any correct approach is acceptable.\nFormat:\n- Provide code or a short explanation of your fix.",
+          "question": "Fix the broken loop so it prints numbers 1 through 5 (inclusive) in order.",
+          "prompt": "The user is trying to fix a for loop that should print numbers 1 through 5. The current code only prints 1 to 4. You should provide hints about loop conditions but never reveal the exact fix. Guide them toward checking the loop condition.",
           "bugged_code": "for(let i=1;i<5;i++){console.log(i)}",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the loop prints 1 through 5 inclusively in correct order. Return 0 otherwise. Do not reveal code." }
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Check if the user provides actual working code that fixes the loop to print 1,2,3,4,5. Must be concrete code like 'i<=5' or 'for(let i=1;i<=5;i++)'. Reject hints, explanations, or suggestions. Return 100 only if user provides actual code solution, 0 for everything else." },
+          "assistant": "This loop looks like it should print 1 through 5, but it's stopping early. Think about the loop condition - what determines when the loop should stop?"
         },
         {
           "phase": 2,
           "task_type": "bugfix",
-          "prompt": "Your goal:\n- Make sum(a,b) return a number synchronously so console.log(sum(2,3)) outputs 5.\nConstraints:\n- Do not reveal exact code; multiple correct solutions allowed.\nFormat:\n- Provide code or a short explanation of your change.",
+          "question": "Fix the sum function so console.log(sum(2,3)) outputs 5 instead of [object Promise].",
+          "prompt": "The user needs to fix a function that returns a Promise instead of a direct value. You should guide them about synchronous vs asynchronous returns but not give the exact solution. Help them understand why Promise.resolve() is causing the issue.",
           "bugged_code": "function sum(a,b){ return Promise.resolve(a+b); } console.log(sum(2,3));",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the function directly returns the correct sum as a number. Return 0 otherwise." }
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Check if the user's fix makes the function return a+b directly without Promise.resolve(). The function should return a synchronous number. Return 100 if correct, 0 if wrong or blank." },
+          "assistant": "The function is returning a Promise instead of the actual sum. What happens when you wrap a value with Promise.resolve()? Think about what you need for synchronous execution."
         },
         {
           "phase": 3,
           "task_type": "bugfix",
-          "prompt": "Your goal:\n- Return true only when status === 'armed'; otherwise false.\nConstraints:\n- Use a correct equality check; do not mutate inputs.\nFormat:\n- Provide code or a short explanation.",
+          "question": "Fix the isArmed function so it returns true only when status equals 'armed'.",
+          "prompt": "The user needs to fix a function that has an assignment (=) instead of equality comparison (==, ===). You should guide them about the difference between assignment and comparison operators without giving the exact fix.",
           "bugged_code": "function isArmed(status){ if(status='armed'){return true;} return false; }",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the conditional checks equality correctly and only returns true when status is 'armed'. Return 0 otherwise." }
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Check if the user fixes the assignment operator (=) to equality comparison (== or ===). The condition should be status === 'armed' or status == 'armed'. Return 100 if correct, 0 if wrong or blank." },
+          "assistant": "Look at the condition in the if statement. There's a difference between = (assignment) and === (equality comparison). What happens when you use = in a condition?"
         },
         {
           "phase": 4,
           "task_type": "bugfix",
-          "prompt": "Your goal:\n- Bind a click handler so clicking #launch logs 'launched'.\nConstraints:\n- Must not log at page load (no immediate execution).\nFormat:\n- Provide the minimal code or a short explanation.",
+          "question": "Add JavaScript to make clicking the launch button log 'launched' to the console.",
+          "prompt": "The user needs to add an event listener to a button. Guide them about event handling in JavaScript but don't provide the complete code. Help them understand addEventListener and click events.",
           "bugged_code": "<button id='launch'></button>",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if a proper click handler is bound and logs 'launched' only upon click. Return 0 otherwise." }
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Check if the user provides code that adds a click event listener to the #launch button that logs 'launched'. Valid solutions include addEventListener or onclick. Return 100 if correct, 0 if wrong or blank." },
+          "assistant": "You have a button but no event handler. How do you make something happen when a user clicks an element? Think about addEventListener or other ways to handle click events."
         },
         {
           "phase": 5,
-          "task_type": "build",
-          "prompt": "Your goal:\n- Merge defaults with overrides into a new object.\nConstraints:\n- Do not mutate defaults; result reflects overrides.\nFormat:\n- Provide code or a short explanation.",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if defaults remain unchanged and overrides are applied immutably. Return 0 otherwise." }
-        }
+          "task_type": "bugfix",
+          "question": "Fix the launchSequence function so it only runs once when the button is clicked, prints numbers 1 through 5 in order, and finally logs 'launched' — without returning a Promise.",
+          "prompt": "The user needs to fix multiple issues in this function: the loop ends too early, it returns a Promise instead of logging, and the click handler should trigger the sequence properly. Guide them to think about loop conditions, synchronous vs asynchronous returns, and event handling without giving the exact fix.",
+          "bugged_code": "function launchSequence(){ for(let i=1;i<5;i++){ console.log(i); } return Promise.resolve('launched'); } document.getElementById('launch').onclick = launchSequence;",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_100_once",
+            "guidance": "Check if the user's fix makes the loop print 1 through 5 (inclusive), removes the Promise so that 'launched' is logged instead of returned, and ensures clicking the button triggers the sequence once. Return 100 if correct, 0 if wrong or blank."
+          },
+          "assistant": "This function is close, but there are a few issues. The loop stops too early, and the function is returning something instead of logging it. Also, think about what should actually happen when the button is clicked — should it return a Promise, or just log messages in order?"
+        }        
       ]
     },
-
     {
       "id": "bard",
       "name": "Bard",
@@ -58,36 +72,45 @@
         {
           "phase": 1,
           "task_type": "creative-hint",
-          "prompt": "Your goal:\n- Give a playful hint for a classic rock anthem that begins with a piano ballad and questions reality vs. fantasy.\nConstraints:\n- Do NOT name the song or artist; no spoilers.\nFormat:\n- One-sentence hint only.",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the hint indirectly and clearly refers to the correct song/artist. Return 0 otherwise." }
+          "question": "Create a playful hint for a classic rock anthem that begins with a piano ballad and questions reality vs. fantasy. Don't name the song or artist!",
+          "prompt": "The user needs to create a hint for 'Bohemian Rhapsody' by Queen without naming it directly. Guide them to reference the song's structure (piano start, opera section, rock ending) or famous lyrics about reality vs fantasy, but never give the answer.",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the hint clearly refers to 'Bohemian Rhapsody' by Queen indirectly through references to its structure (piano ballad start, opera section, rock ending), famous lyrics ('Is this the real life? Is this just fantasy?'), or other distinctive elements. Return 0 if blank, too vague, or reveals the title/artist directly." },
+          "assistant": "Think about this epic song's unique structure - it starts soft and builds dramatically. What famous philosophical question does it pose in the opening? How could you hint at that without spoiling it?"
         },
         {
           "phase": 2,
           "task_type": "creative-hint",
-          "prompt": "Your goal:\n- Hint at a 2010s EDM/Pop mega-hit known for a viral catchphrase.\nConstraints:\n- Do NOT use the title or artist directly.\nFormat:\n- One-sentence hint only.",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the hint clearly points to the correct track indirectly. Return 0 otherwise." }
+          "question": "Create a hint for a 2010s EDM/Pop mega-hit known for a viral catchphrase. Don't use the title or artist directly!",
+          "prompt": "The user needs to hint at 'Gangnam Style' by PSY without naming it. Guide them to reference the viral dance, the district in Seoul, the horse-riding dance moves, or the catchy phrase that became a meme, but never reveal the answer.",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the hint clearly refers to 'Gangnam Style' by PSY through references to the horse-riding dance, the fancy Seoul district, viral catchphrase, or other distinctive elements. Return 0 if blank, too vague, or reveals the title/artist directly." },
+          "assistant": "This song made everyone copy a specific dance move that looks like riding something. Think about what made it go viral worldwide and the fancy area of Seoul it references."
         },
         {
           "phase": 3,
           "task_type": "creative-hint",
-          "prompt": "Your goal:\n- Provide a clue for a Spanish-language global hit that once held YouTube's most-views record.\nConstraints:\n- Do NOT say the title or singer.\nFormat:\n- One-sentence hint only.",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the hint indirectly identifies the correct global hit. Return 0 otherwise." }
+          "question": "Create a clue for a Spanish-language global hit that once held YouTube's most-views record. Don't say the title or singer!",
+          "prompt": "The user needs to hint at 'Despacito' by Luis Fonsi ft. Daddy Yankee without naming it. Guide them to reference the slow/gentle meaning of the word, Puerto Rican artists, record-breaking views, or the song's romantic theme, but never reveal the answer.",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the hint clearly refers to 'Despacito' by Luis Fonsi through references to its meaning (slowly/gently), record-breaking YouTube views, Puerto Rican origin, romantic theme, or other distinctive elements. Return 0 if blank, too vague, or reveals the title/artist directly." },
+          "assistant": "This Spanish song broke all YouTube records and its title means 'slowly' or 'gently.' Think about what made it a global phenomenon and its romantic, laid-back vibe."
         },
         {
           "phase": 4,
           "task_type": "creative-hint",
-          "prompt": "Your goal:\n- Give a fun clue for a K-pop song famous for a horse-riding dance.\nConstraints:\n- Do NOT say the title or artist.\nFormat:\n- One-sentence hint only.",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the clue indirectly conveys the correct song. Return 0 otherwise." }
+          "question": "Give a fun clue for a K-pop song famous for a horse-riding dance. Don't say the title or artist!",
+          "prompt": "The user needs to hint at 'Gangnam Style' by PSY (different from phase 2 - this focuses on the dance). Guide them to reference the iconic horse-riding dance moves, the viral nature, or the catchy beat, but never reveal the answer.",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the hint clearly refers to 'Gangnam Style' by PSY through references to the horse-riding dance, viral dance moves, K-pop breakthrough, or other distinctive elements. Return 0 if blank, too vague, or reveals the title/artist directly." },
+          "assistant": "This K-pop hit made everyone mimic a specific animal's movement. Think about the dance that went viral worldwide and how people moved their hands and body in a bouncing motion."
         },
         {
           "phase": 5,
           "task_type": "creative-hint",
-          "prompt": "Your goal:\n- Create a riddle-like clue for an alt-pop anthem about staying in the spotlight.\nConstraints:\n- Do NOT name the track directly.\nFormat:\n- One-sentence hint only.",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the clue indirectly identifies the correct alt-pop hit. Return 0 otherwise." }
+          "question": "Create a riddle-like clue for an alt-pop anthem about staying in the spotlight. Don't name the track directly!",
+          "prompt": "The user needs to hint at 'Anti-Hero' by Taylor Swift without naming it. Guide them to reference the song's themes about being the villain in your own story, self-reflection, or the concept of being your own worst enemy, but never reveal the answer.",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Return 100 if the hint clearly refers to 'Anti-Hero' by Taylor Swift through references to being the villain in your own story, self-sabotage, spotlight themes, or other distinctive lyrical elements. Return 0 if blank, too vague, or reveals the title/artist directly." },
+          "assistant": "This song is about being the villain in your own story and the problems that come with fame. Think about what it means to sabotage yourself while everyone's watching."
         }
       ]
     },
-
     {
       "id": "necromancer",
       "name": "Necromancer",
@@ -97,36 +120,65 @@
         {
           "phase": 1,
           "task_type": "recursion-two-part",
-          "prompt": "Your goal:\n- (A) Define a recursive function that sums digits of n.\n- (B) Define a recursive function counting ways to climb n with 1 or 2 steps.\nConstraints:\n- Must provide actual working code, not explanations.\nFormat:\n- Label parts clearly: A) ... B) ...",
-          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 ONLY if both parts contain actual working code (not explanations). Return 0 for any conceptual answers or explanations without code." }
+          "question": "Write TWO recursive functions: (A) sumDigits(n) that returns the sum of digits of a non-negative integer n, (B) climbWays(n) that counts ways to climb n stairs taking 1 or 2 steps at a time. Provide actual working code for both (A) and (B).",
+          "prompt": "Guide the user to identify base cases and recursive steps: (A) peel the last digit with modulo/division; stop when n < 10 or n === 0, (B) think f(n) = f(n-1) + f(n-2) with base cases for n <= 1. Do not provide full code.",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_50_two_parts",
+            "guidance": "Return 100 ONLY if both parts contain actual recursive code: (A) correctly reduces n by digits until base case, (B) uses recursion with base cases (e.g., n<=1) and returns f(n-1)+f(n-2). Return 0 if one or both are missing or non-recursive."
+          },
+          "assistant": "Think base cases first. (A) What is the smallest n where the answer is obvious? How do you peel off the last digit each step? (B) How can the number of ways to reach step n be formed from smaller subproblems?"
         },
         {
           "phase": 2,
           "task_type": "recursion-two-part",
-          "prompt": "Your goal:\n- (A) Recursively flatten a nested array.\n- (B) Recursively compute max depth of a nested object; null => 0.\nConstraints:\n- Must provide actual working code, not explanations.\nFormat:\n- Label parts: A) ... B) ...",
-          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 ONLY if both parts contain actual working code (not explanations). Return 0 for any conceptual answers or explanations without code." }
+          "question": "Implement TWO recursive utilities: (A) flatten(arr) that returns a new 1D array from a deeply nested array, (B) maxDepth(obj) that returns the maximum nesting depth of a plain object (null → depth 0). Provide actual working code for both (A) and (B).",
+          "prompt": "Nudge the user to check types: (A) use Array.isArray and recursively concat results, (B) treat non-object or null as depth 0; for objects, compute the max of child depths + 1. Do not provide full code.",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_50_two_parts",
+            "guidance": "Return 100 ONLY if (A) recursively flattens nested arrays into a new array, and (B) recursively traverses object properties, returning 0 for null/non-objects and max child depth + 1 otherwise. Return 0 if either is missing or non-recursive."
+          },
+          "assistant": "Decide how to detect when to recurse. (A) If you see an array inside, dive in and combine. (B) For depth, consider how to aggregate depths from each nested property."
         },
         {
           "phase": 3,
           "task_type": "recursion-two-part",
-          "prompt": "Your goal:\n- (A) Generate all valid parentheses for n=3.\n- (B) Recursively compute sumDigits(99).\nConstraints:\n- Must provide actual working code, not explanations.\nFormat:\n- Label parts: A) ... B) ...",
-          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 ONLY if both parts contain actual working code (not explanations). Return 0 for any conceptual answers or explanations without code." }
+          "question": "Produce TWO solutions: (A) generateParentheses(n=3) that returns all valid combos of 3 pairs of parentheses, (B) sumDigits(99) using your recursive digit-sum approach. Provide actual working code for both (A) and (B).",
+          "prompt": "Coach on backtracking rules: you can add '(' while opens < n, and ')' while closes < opens. For sumDigits, reuse digit peeling with a clear base case. Do not provide full code.",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_50_two_parts",
+            "guidance": "Return 100 ONLY if (A) returns the 5 valid combinations for n=3 via a recursive/backtracking approach and (B) is a recursive digit-sum yielding 18 for 99. Return 0 if either part lacks working code."
+          },
+          "assistant": "Track counts of '(' and ')' you’ve placed. Only add a ')' if it won’t break validity. For 99, what’s the base case and how do you reduce the number each step?"
         },
         {
           "phase": 4,
           "task_type": "recursion-two-part",
-          "prompt": "Your goal:\n- (A) Show code for the base case in a recursive array function.\n- (B) Provide working code with input/output example.\nConstraints:\n- Must include actual code snippets.\nFormat:\n- Label parts: A) ... B) ...",
-          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 ONLY if both parts contain actual code (not just explanations). Return 0 for text-only explanations without code." }
+          "question": "Write TWO search utilities on sorted data: (A) recursiveBinarySearch(arr, target) returning the index or -1, (B) countOccurrences(arr, target) using recursion to count how many times target appears. Provide actual working code for both (A) and (B).",
+          "prompt": "For (A), guide them to compute mid and branch left/right with updated bounds; stop when bounds cross. For (B), hint at using recursion over indices or first/last occurrence strategy to count. Do not provide full code.",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_50_two_parts",
+            "guidance": "Return 100 ONLY if (A) performs a genuine recursive binary search with correct base cases and returns a valid index or -1, and (B) uses recursion to count occurrences (either by recursive scan or by recursively finding first/last indices). Return 0 if either is missing or non-recursive."
+          },
+          "assistant": "Define your stopping condition clearly. (A) How do you shrink the search range each call? (B) Decide whether to scan recursively or find boundaries recursively and compute the count."
         },
         {
           "phase": 5,
           "task_type": "recursion-two-part",
-          "prompt": "Your goal:\n- (A) Show naive recursive Fibonacci code and explain why it's exponential.\n- (B) Show memoized Fibonacci code and state its time complexity.\nConstraints:\n- Must include actual code examples.\nFormat:\n- Label parts: A) ... B) ...",
-          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 ONLY if both parts include actual Fibonacci code examples. Return 0 for explanations without code." }
+          "question": "Compare TWO Fibonacci approaches: (A) naive recursive fib(n) and a short note on why it’s exponential, (B) memoized fib(n) using a cache and state its time complexity. Provide actual working code and the complexity notes for both (A) and (B).",
+          "prompt": "Encourage showing the repeated overlapping subproblems in the naive version, and how a cache turns it into linear time. Do not provide full implementations.",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_50_two_parts",
+            "guidance": "Return 100 ONLY if (A) includes a working naive recursive fib with an explanation of ~O(2^n), and (B) includes a working memoized fib using a cache with O(n) time (and typically O(n) space) stated. Return 0 if either lacks working code."
+          },
+          "assistant": "Why does the naive version recompute the same inputs over and over? Show how storing results avoids that explosion, and state the resulting time complexity."
         }
       ]
-    },
-
+    },    
     {
       "id": "alchemist",
       "name": "Alchemist",
@@ -136,6 +188,7 @@
         {
           "phase": 1,
           "task_type": "poison-code",
+          "question": "Take the safe DOM-rendering function and poison it by introducing real XSS-prone or unsafe patterns. Show distinct changes.",
           "prompt": "Your goal:\n- Start with safe DOM rendering, then poison it by making it vulnerable.\nConstraints:\n- Introduce distinct, real issues; avoid duplicates.\nFormat:\n- Provide code showing changes or list them clearly.",
           "perfect_code": "function showSafe(text){ const el=document.getElementById('out'); el.textContent=text; }",
           "validator": {
@@ -147,39 +200,75 @@
               { "name": "unsafe_eval", "pattern": "eval(" },
               { "name": "removed_textContent", "pattern": ".textContent", "negate": true }
             ]
-          }
+          },
+          "assistant": "Think: how do safe render paths become unsafe? Replace text-only sinks with HTML sinks, introduce dynamic code execution, or remove the escaping step entirely. Make each poisonous change unique."
         },
         {
           "phase": 2,
           "task_type": "poison-code",
+          "question": "Start from a secure password comparison and inject flaws that cause timing leaks or logic weaknesses (e.g., loose equality).",
           "prompt": "Your goal:\n- Start with a secure password compare, then poison it with timing leaks or weak equality.\nConstraints:\n- Each distinct flaw counts once.\nFormat:\n- Provide code or list changes.",
           "perfect_code": "function eq(a,b){ /* constant-time compare; do not leak */ }",
-          "validator": { "type": "ai_score", "scheme": "attack_20_bugs", "guidance": "Count timing or compare flaws introduced. Score=count*20 capped at 100. Return only the number.", "bug_catalog": [ { "name": "early_return", "pattern": "return false" }, { "name": "loose_compare", "pattern": "==" } ] }
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_20_bugs",
+            "guidance": "Count timing or compare flaws introduced. Score=count*20 capped at 100. Return only the number.",
+            "bug_catalog": [
+              { "name": "early_return", "pattern": "return false" },
+              { "name": "loose_compare", "pattern": "==" }
+            ]
+          },
+          "assistant": "To leak timing, branch early on mismatch or length differences. To weaken correctness, switch to loose equality or partial compares. Each flaw should be a distinct vulnerability."
         },
         {
           "phase": 3,
           "task_type": "poison-code",
+          "question": "Degrade a parameterized SQL query into an injection-prone query using concatenation or templates.",
           "prompt": "Your goal:\n- Start with a parameterized SQL query and poison it by making it unsafe.\nConstraints:\n- Show string concatenation or template injection.\nFormat:\n- Provide code or list changes.",
           "perfect_code": "function queryUser(db,name){ return db.query('SELECT * FROM users WHERE name=?',[name]); }",
-          "validator": { "type": "ai_score", "scheme": "attack_20_bugs", "guidance": "Count query concatenations. Score=count*20 capped at 100. Return only the number.", "bug_catalog": [ { "name": "plus_concat", "pattern": "+ name" }, { "name": "template_concat", "pattern": "${name}" } ] }
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_20_bugs",
+            "guidance": "Count query concatenations. Score=count*20 capped at 100. Return only the number.",
+            "bug_catalog": [
+              { "name": "plus_concat", "pattern": "+ name" },
+              { "name": "template_concat", "pattern": "\\${name}" }
+            ]
+          },
+          "assistant": "Swap placeholders for raw string building. Use '+' concatenation or template literals to directly embed user input into the SQL string. Each distinct concatenation style counts once."
         },
         {
           "phase": 4,
           "task_type": "poison-code",
+          "question": "Take a strict email validator and relax it in distinct ways so bad inputs pass.",
           "prompt": "Your goal:\n- Start with strict email validation and poison it by making it too permissive.\nConstraints:\n- Distinct permissive changes count.\nFormat:\n- Provide code or list changes.",
           "perfect_code": "const isEmail=s=>/^[\\w.-]+@[\\w.-]+\\.[A-Za-z]{2,}$/.test(s);",
-          "validator": { "type": "ai_score", "scheme": "attack_20_bugs", "guidance": "Count changes that allow bad inputs. Score=count*20 capped at 100. Return only the number.", "bug_catalog": [ { "name": "over_permissive", "pattern": "/.*/" }, { "name": "always_true", "pattern": "return true" } ] }
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_20_bugs",
+            "guidance": "Count changes that allow bad inputs. Score=count*20 capped at 100. Return only the number.",
+            "bug_catalog": [
+              { "name": "over_permissive", "pattern": "/.*/" },
+              { "name": "always_true", "pattern": "return true" }
+            ]
+          },
+          "assistant": "Make the regex permissive (e.g., match-all), or bypass validation entirely by returning true. Ensure each change is a different permissive flaw."
         },
         {
           "phase": 5,
           "task_type": "poison-code",
+          "question": "Corrupt the classic 'Hello, World!' in multiple unique ways so it breaks or behaves incorrectly.",
           "prompt": "Your goal:\n- Corrupt the 'Hello, World!' program in unique ways to break or alter it.\nConstraints:\n- Distinct corruptions count; avoid duplicates.\nFormat:\n- Provide code or bullet list.",
           "perfect_code": "console.log('Hello, World!');",
-          "validator": { "type": "ai_score", "scheme": "attack_20_bugs", "guidance": "Count distinct corruptions of the program. Score=count*20 capped at 100. Return only the number." }
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_20_bugs",
+            "guidance": "Count distinct corruptions of the program. Score=count*20 capped at 100. Return only the number."
+          },
+          "assistant": "Consider syntax errors, API misuse, environmental assumptions, or output tampering. Each corruption should be a clearly different way to break or poison the simple program."
         }
       ]
-    },
-
+    },    
     {
       "id": "hacker",
       "name": "Hacker",
@@ -189,41 +278,50 @@
         {
           "phase": 1,
           "task_type": "inspect",
-          "prompt": "Your goal:\n- Check hidden HTML comments for a simple question, then answer only that question.\nConstraints:\n- Do not paste hidden text; respond with the answer only.\nFormat:\n- Provide the final number only.",
+          "question": "Check hidden HTML comments for a simple question, then answer only that question. Only provide the answer, no other text.",
+          "prompt": "Technical brief:\n- Goal: Inspect source, locate HTML comments (<!-- ... -->) containing a simple math question, compute, and output the result.\n- Constraints: Do NOT paste the hidden text; return the final number only. No explanation.\n- Format: Output must be a single number.",
           "hidden_html": "<!-- Q: 2+2? -->",
-          "validator": { "type": "equals_number", "value": 4 }
+          "validator": { "type": "equals_number", "value": 4 },
+          "assistant": "檢查原始碼入面嘅 <!-- ... --> 註釋，讀取題目，計數學結果，然後只輸出一個數字。唔好貼出題目內容。"
         },
         {
           "phase": 2,
           "task_type": "inspect",
-          "prompt": "Your goal:\n- Find the visually hidden question inside a span and answer it.\nConstraints:\n- Do not paste the hidden prompt.\nFormat:\n- Provide the final number only.",
+          "question": "Find the visually hidden question inside a span and answer it. Only provide the answer, no other text.",
+          "prompt": "Technical brief:\n- Goal: Parse DOM, locate a visually hidden element (e.g., style='display:none'), extract the math question, compute, and return the result.\n- Constraints: Do NOT paste the hidden prompt; return the final number only. No explanation.\n- Format: Output must be a single number.",
           "hidden_html": "<span class='secret' style='display:none'>What is 5*2?</span>",
-          "validator": { "type": "equals_number", "value": 10 }
+          "validator": { "type": "equals_number", "value": 10 },
+          "assistant": "搵到被 display:none 藏起嘅文字，讀題目、計答案，最後淨係輸出個數字。唔好貼出原文。"
         },
         {
           "phase": 3,
           "task_type": "decode",
-          "prompt": "Your goal:\n- Decode the Base64 string and answer the revealed question.\nConstraints:\n- Do not paste the decoded text.\nFormat:\n- Provide the final number only.",
+          "question": "Decode the Base64 string and answer the revealed question. Only provide the answer, no other text.",
+          "prompt": "Technical brief:\n- Goal: Base64-decode the provided payload, extract the math question, compute, and output the result.\n- Constraints: Do NOT paste the decoded text; return the final number only. No explanation.\n- Format: Output must be a single number.",
           "hidden_data": "V2hhdCBpcyA0ICsgNA==",
-          "validator": { "type": "equals_number", "value": 8 }
+          "validator": { "type": "equals_number", "value": 8 },
+          "assistant": "將字串做 Base64 解碼，讀出題目，計算後只輸出數字答案。唔好展示解碼後嘅內容。"
         },
         {
           "phase": 4,
           "task_type": "deobfuscate",
-          "prompt": "Your goal:\n- Deobfuscate the string-building code and answer the question.\nConstraints:\n- Do not paste the constructed text.\nFormat:\n- Provide the final number only.",
+          "question": "Deobfuscate the string-building code and answer the question. Only provide the answer, no other text.",
+          "prompt": "Technical brief:\n- Goal: Evaluate or reason through the char-code construction to reconstruct the math expression, compute, and output the result.\n- Constraints: Do NOT paste the constructed text; return the final number only. No explanation.\n- Format: Output must be a single number.",
           "hidden_js": "String.fromCharCode(54,43,50)",
-          "validator": { "type": "equals_number", "value": 8 }
+          "validator": { "type": "equals_number", "value": 8 },
+          "assistant": "將字元碼轉返做字串（例如 54→'6'，43→'+'，50→'2'），計算表達式，最後只輸出數字。"
         },
         {
           "phase": 5,
           "task_type": "data-attr",
-          "prompt": "Your goal:\n- Inspect the data-q attribute to find the encoded math question and answer it.\nConstraints:\n- Do not paste the encoded or decoded text.\nFormat:\n- Provide the final number only.",
-          "hidden_html": "<div id='c' data-q='Nysz'></div>",
-          "validator": { "type": "equals_number", "value": 8 }
+          "question": "Inspect the data-q attribute to find the encoded math question and answer it. Only provide the answer, no other text. ",
+          "prompt": "Technical brief:\n- Goal: Read the element's data attribute containing a Base64-encoded math question, decode, compute, and output the result.\n- Constraints: Do NOT paste the encoded or decoded text; return the final number only. No explanation.\n- Format: Output must be a single number.",
+          "hidden_html": "<div id='c' data-q='Nisy'></div>",
+          "validator": { "type": "equals_number", "value": 8 },
+          "assistant": "讀 data 屬性，做 Base64 解碼，計算題目，最後只輸出答案數字。本身編碼或解碼內容唔好貼出。"
         }
       ]
-    },
-
+    },    
     {
       "id": "mysterious",
       "name": "Mysterious",
