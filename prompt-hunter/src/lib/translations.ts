@@ -75,7 +75,7 @@ export const translations = {
     // Character specialties
     debuggingLogic: "Debugging & Logic",
     creativeMusic: "Creative Writing & Music", 
-    darkArtsAlgorithms: "Dark Arts & Algorithms",
+    darkArtsAlgorithms: "Dark Arts & Mathematics",
     dataTransformation: "Data Transformation",
     securitySystems: "Security & Systems",
     unknownPowers: "Unknown Powers",
@@ -168,7 +168,7 @@ export const translations = {
     // Characters section
     availableCharacters: "👥 可用角色",
     loadingCharacters: "載入角色中...",
-    challenges: "關卡",
+    challenges: "回合",
     complete: "✓ 完成",
     viewCharacterDetails: "📖 查看角色詳情",
     congratulations: "恭喜！",

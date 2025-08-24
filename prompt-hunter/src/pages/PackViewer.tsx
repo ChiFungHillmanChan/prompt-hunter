@@ -1,11 +1,12 @@
 import { useContent } from '../store/content';
 import { useProgress } from '../store/progress';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../lib/routes';
 import { useTranslation } from '../hooks/useTranslation';
 import { translations } from '../lib/translations';
 import { getCharacterStats } from '../lib/characterStats';
 import { useSettings } from '../store/settings';
+import React from 'react';
 
 
 
@@ -52,6 +53,8 @@ export default function PackViewer() {
   const { completedRoles } = useProgress();
   const { t } = useTranslation();
   const settings = useSettings();
+  const nav = useNavigate();
+  const [showRestartConfirmation, setShowRestartConfirmation] = React.useState<{ name: string; id: string } | null>(null);
 
   // Show loading if pack is not available
   if (!pack) {
@@ -81,27 +84,44 @@ export default function PackViewer() {
   };
 
   const onRestartCharacter = (character: { name: string; id: string }) => {
-    if (confirm(settings.language === 'zh-hk' 
-      ? `確定要重新開始${character.name}嘅進度嗎？呢個操作會清除佢嘅所有階段進度。` 
-      : `Are you sure you want to restart ${character.name}? This will clear all stage progress for this character.`
-    )) {
+    setShowRestartConfirmation(character);
+  };
+
+  const onConfirmRestart = () => {
+    if (showRestartConfirmation) {
       // Clear character progress from localStorage
       try {
-        localStorage.removeItem(`ph-progress-${character.id}`);
+        localStorage.removeItem(`ph-progress-${showRestartConfirmation.id}`);
       } catch {
         // Failed to remove character progress
       }
       
       // Reset completed role in progress store
-      useProgress.getState().resetRole(character.id);
+      useProgress.getState().resetRole(showRestartConfirmation.id);
       
-      // Show success message
-      alert(settings.language === 'zh-hk' 
-        ? `${character.name}嘅進度已重新開始！` 
-        : `${character.name} progress has been restarted!`
-      );
+      // Close modal
+      setShowRestartConfirmation(null);
+      
+      // Navigate directly to the game
+      nav(ROUTES.PLAY(showRestartConfirmation.id));
     }
   };
+
+  const onCancelRestart = () => {
+    setShowRestartConfirmation(null);
+  };
+
+  // Handle escape key to close modal
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showRestartConfirmation) {
+        setShowRestartConfirmation(null);
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [showRestartConfirmation]);
   
   if (!pack) {
     return (
@@ -264,6 +284,47 @@ export default function PackViewer() {
           </div>
         )}
       </div>
+
+      {/* Restart Confirmation Modal */}
+      {showRestartConfirmation && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+          <div className="bg-slate-800 rounded-xl p-6 max-w-sm w-full border border-red-500/30 shadow-2xl">
+            {/* Warning Icon */}
+            <div className="text-center mb-6">
+              <div className="text-red-400 text-5xl mb-3">⚠️</div>
+              <h2 className="text-xl font-bold text-white mb-2">
+                {settings.language === 'zh-hk' ? '重新開始角色' : 'Restart Character'}
+              </h2>
+            </div>
+
+            {/* Confirmation Message */}
+            <div className="mb-6">
+              <p className="text-slate-300 text-center leading-relaxed">
+                {settings.language === 'zh-hk' 
+                  ? `確定要重新開始${showRestartConfirmation.name}嘅進度嗎？呢個操作會清除佢嘅所有階段進度並直接開始新遊戲。`
+                  : `Are you sure you want to restart ${showRestartConfirmation.name}? This will clear all stage progress for this character and start a new game directly.`
+                }
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={onCancelRestart}
+                className="flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg text-white font-medium transition-colors"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                onClick={onConfirmRestart}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium transition-colors"
+              >
+                {settings.language === 'zh-hk' ? '確認重新開始' : 'Confirm Restart'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

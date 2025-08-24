@@ -281,7 +281,7 @@ export default function PlayPage() {
             <div className="bg-white/5 backdrop-blur rounded-xl p-6 border border-white/10">
               {role.id === 'necromancer' && (
                 <div className="mb-3 text-xs text-yellow-300">
-                  Format: Answer clearly with "A) ..." and "B) ..."
+                  Format: Provide both answers as x,y (e.g. 10,-5 or -3,7)
                 </div>
               )}
               {currentPhase && (
@@ -468,9 +468,9 @@ export default function PlayPage() {
 }
 
 function pickMonsterSprite(phase: number): string {
-  if (phase % 3 === 1) return '/sprites/monster_slime.svg';
+  if (phase % 3 === 1) return '/sprites/monster_bat.svg';
   if (phase % 3 === 2) return '/sprites/monster_imp.svg';
-  return '/sprites/monster_bat.svg';
+  return '/sprites/monster_slime.svg';
 }
 
 

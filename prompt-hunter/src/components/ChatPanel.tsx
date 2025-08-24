@@ -32,15 +32,18 @@ export default function ChatPanel({ role, phase }: Props) {
     if (!apiKey || loading) return;
     setLoading(true);
     try {
-      const ctx = buildContext(role, phase, language) + '\n\nUser question (hints only, no solutions):\n' + prompt;
+      const ctx = buildContext(role, phase, language) + '\n\n=== IMPORTANT: USER\'S ACTUAL QUESTION (analyze this specific code/question, ignore phase context if it doesn\'t match) ===\n' + prompt + '\n=== END USER QUESTION ===';
       const res = await callGemini(apiKey, ctx);
       // Mask responses for Mysterious
       // Sanitize model response to avoid code blocks or direct solutions
       let text = (res.text || '').trim();
       // Remove fenced code blocks
       text = text.replace(/```[\s\S]*?```/g, '[redacted code]');
-      // Basic guard: if it looks like direct code lines, replace them
-      if (/\bfunction\b|=>|const\s+|let\s+|var\s+|class\s+/.test(text)) {
+      // Basic guard: if it looks like actual code implementation (not just mentions), replace them
+      // Look for patterns that indicate actual code rather than explanations
+      if (/(\bfunction\s+\w+\s*\(|\w+\s*=\s*\(|\w+\s*=\s*function|\w+\s*=\s*\w+\s*=>)/gi.test(text) || 
+          text.includes('```') || 
+          /^\s*(function|const|let|var|class)\s+\w+/m.test(text)) {
         text = 'I can\'t provide direct code. Here\'s a hint: ' + text.replace(/\n+/g, ' ').slice(0, 280);
       }
       // Limit response length for hints - keep it short and focused
@@ -86,19 +89,6 @@ export default function ChatPanel({ role, phase }: Props) {
     }
   };
 
-  // Handle hacker role - show special message only
-  if (role.id === 'hacker') {
-    return (
-      <div className="p-3 bg-white/5 border border-white/10 rounded text-sm space-y-2">
-        <div className="font-semibold">{t('geminiChat')}</div>
-        
-        <div className="bg-orange-500/20 border border-orange-500/30 p-2 rounded text-xs">
-          <div className="text-orange-300 font-semibold mb-1">Assistant:</div>
-          <div className="text-white">{t('hackerAiMessage')}</div>
-        </div>
-      </div>
-    );
-  }
 
   // Handle mysterious role - show the assistant message from the phase with ???
   if (role.id === 'mysterious') {

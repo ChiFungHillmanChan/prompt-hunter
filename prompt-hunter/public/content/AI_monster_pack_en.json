@@ -24,11 +24,11 @@
         {
           "phase": 2,
           "task_type": "bugfix",
-          "question": "Fix the sum function so console.log(sum(2,3)) outputs 5 instead of [object Promise].",
-          "prompt": "The user needs to fix a function that returns a Promise instead of a direct value. You should guide them about synchronous vs asynchronous returns but not give the exact solution. Help them understand why Promise.resolve() is causing the issue.",
-          "bugged_code": "function sum(a,b){ return Promise.resolve(a+b); } console.log(sum(2,3));",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Check if the user's fix makes the function return a+b directly without Promise.resolve(). The function should return a synchronous number. Return 100 if correct, 0 if wrong or blank." },
-          "assistant": "The function is returning a Promise instead of the actual sum. What happens when you wrap a value with Promise.resolve()? Think about what you need for synchronous execution."
+          "question": "Fix the sum function so console.log(sum(2,3)) outputs 5. Provide the code to make it work.",
+          "prompt": "The user needs to fix a function that returns a direct value. You should guide them but not give the exact solution. Help them understand how to finish a function.",
+          "bugged_code": "function sum(a,b){ return (?); } console.log(sum(2,3));",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Check if the user's fix makes the function return a+b directly. The function should return an actual number. Return 100 if correct, 0 if wrong or blank." },
+          "assistant": "The function is not returning anything but a question mark. Think about how to return the sum of a and b."
         },
         {
           "phase": 3,
@@ -37,30 +37,35 @@
           "prompt": "The user needs to fix a function that has an assignment (=) instead of equality comparison (==, ===). You should guide them about the difference between assignment and comparison operators without giving the exact fix.",
           "bugged_code": "function isArmed(status){ if(status='armed'){return true;} return false; }",
           "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Check if the user fixes the assignment operator (=) to equality comparison (== or ===). The condition should be status === 'armed' or status == 'armed'. Return 100 if correct, 0 if wrong or blank." },
-          "assistant": "Look at the condition in the if statement. There's a difference between = (assignment) and === (equality comparison). What happens when you use = in a condition?"
+          "assistant": "Look at the condition in the if statement. What happens when you use = in a condition?"
         },
         {
           "phase": 4,
           "task_type": "bugfix",
-          "question": "Add JavaScript to make clicking the launch button log 'launched' to the console.",
-          "prompt": "The user needs to add an event listener to a button. Guide them about event handling in JavaScript but don't provide the complete code. Help them understand addEventListener and click events.",
-          "bugged_code": "<button id='launch'></button>",
-          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "Check if the user provides code that adds a click event listener to the #launch button that logs 'launched'. Valid solutions include addEventListener or onclick. Return 100 if correct, 0 if wrong or blank." },
-          "assistant": "You have a button but no event handler. How do you make something happen when a user clicks an element? Think about addEventListener or other ways to handle click events."
+          "question": "Fix the button so that when it is clicked, it shows 'launched' in the console.",
+          "prompt": "The user needs to connect the button to an action using addEventListener. Guide them that buttons can react to clicks, and they need to attach some JavaScript code to the button’s click event. Don’t give the exact code, just explain the idea of handling a click.",
+          "bugged_code": "<button id=\"launch\">Launch</button>\n<script>\n  // Missing: how to run console.log('launched') when button is clicked\n</script>",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_100_once",
+            "guidance": "Check if the user attaches a click handler to #launch that logs 'launched'. Valid solutions: using onclick or addEventListener. Return 100 if correct, 0 if wrong or blank."
+          },
+          "assistant": "Right now the button doesn’t do anything. In JavaScirpt, you can use addEventListerner.\n \n document.getElementById('{button-id-name}}').addEventListener('click', () => { (return value) });"
         },
         {
           "phase": 5,
           "task_type": "bugfix",
-          "question": "Fix the launchSequence function so it only runs once when the button is clicked, prints numbers 1 through 5 in order, and finally logs 'launched' — without returning a Promise.",
-          "prompt": "The user needs to fix multiple issues in this function: the loop ends too early, it returns a Promise instead of logging, and the click handler should trigger the sequence properly. Guide them to think about loop conditions, synchronous vs asynchronous returns, and event handling without giving the exact fix.",
-          "bugged_code": "function launchSequence(){ for(let i=1;i<5;i++){ console.log(i); } return Promise.resolve('launched'); } document.getElementById('launch').onclick = launchSequence;",
+          "question": "Fix the function so countVowels('Hello') returns 2 and countVowels('Sky') returns 0.",
+          "prompt": "The user needs to count vowels (a, e, i, o, u) in a word. The bug is that the condition is using assignment (=) instead of comparison (== or ===). Help them understand the difference between assignment and comparison operators, but do not give the exact fix.",
+          "bugged_code": "function countVowels(str){\n  let count = 0;\n  for(let i=0;i<str.length;i++){\n    const ch = str[i].toLowerCase();\n    if (ch = 'a' || ch = 'e' || ch = 'i' || ch = 'o' || ch = 'u') {\n      count++;\n    }\n  }\n  return count;\n}\nconsole.log(countVowels('Hello')); // should be 2\nconsole.log(countVowels('Sky'));   // should be 0",
           "validator": {
             "type": "ai_score",
             "scheme": "attack_100_once",
-            "guidance": "Check if the user's fix makes the loop print 1 through 5 (inclusive), removes the Promise so that 'launched' is logged instead of returned, and ensures clicking the button triggers the sequence once. Return 100 if correct, 0 if wrong or blank."
+            "guidance": "Return 100 only if the user's fix correctly counts vowels case-insensitively. Specifically, countVowels('Hello') must output 2 and countVowels('Sky') must output 0. Accept fixes where the condition uses proper equality comparisons (== or ===). Return 0 if incorrect or blank."
           },
-          "assistant": "This function is close, but there are a few issues. The loop stops too early, and the function is returning something instead of logging it. Also, think about what should actually happen when the button is clicked — should it return a Promise, or just log messages in order?"
-        }        
+          "assistant": "Look at the if condition carefully. In JavaScript, using a single = means you’re assigning a value, not checking it. What should you use when you want to compare a character against 'a', 'e', 'i', 'o', or 'u'? You learned it in the previous phase."
+        }
+        
       ]
     },
     {
@@ -115,75 +120,55 @@
       "id": "necromancer",
       "name": "Necromancer",
       "difficulty": "medium",
-      "description": "Raises solutions from the depths of recursion and classic algorithms.",
+      "description": "Raises math puzzles from the depths — Necromancer always attacks twice.",
       "phases": [
         {
           "phase": 1,
-          "task_type": "recursion-two-part",
-          "question": "Write TWO recursive functions: (A) sumDigits(n) that returns the sum of digits of a non-negative integer n, (B) climbWays(n) that counts ways to climb n stairs taking 1 or 2 steps at a time. Provide actual working code for both (A) and (B).",
-          "prompt": "Guide the user to identify base cases and recursive steps: (A) peel the last digit with modulo/division; stop when n < 10 or n === 0, (B) think f(n) = f(n-1) + f(n-2) with base cases for n <= 1. Do not provide full code.",
-          "validator": {
-            "type": "ai_score",
-            "scheme": "attack_50_two_parts",
-            "guidance": "Return 100 ONLY if both parts contain actual recursive code: (A) correctly reduces n by digits until base case, (B) uses recursion with base cases (e.g., n<=1) and returns f(n-1)+f(n-2). Return 0 if one or both are missing or non-recursive."
-          },
-          "assistant": "Think base cases first. (A) What is the smallest n where the answer is obvious? How do you peel off the last digit each step? (B) How can the number of ways to reach step n be formed from smaller subproblems?"
+          "task_type": "math-two-answers",
+          "question": "(A) What is the sum of the first 100 natural numbers?\n(B) What is 1−2−3−4−...−100 equal to?\n**The user must provide both answers at once, separated by a single comma with no spaces, e.g. 10,-10",
+          "prompt": "The user needs to calculate the sum of the first 100 natural numbers and the result of 1−2−3−4−...−100. (A) Use the formula (n)(n+1)/2 and substitute n=100. (B) Use 1 minus the sum of (2+3+4+...+100). Important: do not provide the direct answer, the user must complete the calculation.",
+          "bugged_code": "",
+          "validator": { "type": "equals_number", "scheme": "attack_100_once", "value": [5050, -5048] }
         },
         {
           "phase": 2,
-          "task_type": "recursion-two-part",
-          "question": "Implement TWO recursive utilities: (A) flatten(arr) that returns a new 1D array from a deeply nested array, (B) maxDepth(obj) that returns the maximum nesting depth of a plain object (null → depth 0). Provide actual working code for both (A) and (B).",
-          "prompt": "Nudge the user to check types: (A) use Array.isArray and recursively concat results, (B) treat non-object or null as depth 0; for objects, compute the max of child depths + 1. Do not provide full code.",
-          "validator": {
-            "type": "ai_score",
-            "scheme": "attack_50_two_parts",
-            "guidance": "Return 100 ONLY if (A) recursively flattens nested arrays into a new array, and (B) recursively traverses object properties, returning 0 for null/non-objects and max child depth + 1 otherwise. Return 0 if either is missing or non-recursive."
-          },
-          "assistant": "Decide how to detect when to recurse. (A) If you see an array inside, dive in and combine. (B) For depth, consider how to aggregate depths from each nested property."
+          "task_type": "math-two-answers",
+          "question": "(A) What is the greatest common divisor (GCD) of 119 and 14161?\n(B) What is the least common multiple (LCM) of 100 and 202?\n**The user must provide both answers at once, separated by a single comma with no spaces, e.g. 10,10",
+          "prompt": "The user needs to calculate the GCD of 119 and 14161, and the LCM of 100 and 202. (A) For GCD, check divisibility: if 14161 can be divided exactly by 119, then 119 is the GCD. (B) Use the formula: LCM(a,b) = (a × b) ÷ GCD(a,b). Important: do not provide the direct answer, the user must complete the calculation.",
+          "bugged_code": "",
+          "validator": { "type": "equals_number", "scheme": "attack_100_once", "value": [119, 10100] }
         },
         {
           "phase": 3,
-          "task_type": "recursion-two-part",
-          "question": "Produce TWO solutions: (A) generateParentheses(n=3) that returns all valid combos of 3 pairs of parentheses, (B) sumDigits(99) using your recursive digit-sum approach. Provide actual working code for both (A) and (B).",
-          "prompt": "Coach on backtracking rules: you can add '(' while opens < n, and ')' while closes < opens. For sumDigits, reuse digit peeling with a clear base case. Do not provide full code.",
-          "validator": {
-            "type": "ai_score",
-            "scheme": "attack_50_two_parts",
-            "guidance": "Return 100 ONLY if (A) returns the 5 valid combinations for n=3 via a recursive/backtracking approach and (B) is a recursive digit-sum yielding 18 for 99. Return 0 if either part lacks working code."
-          },
-          "assistant": "Track counts of '(' and ')' you’ve placed. Only add a ')' if it won’t break validity. For 99, what’s the base case and how do you reduce the number each step?"
+          "task_type": "math-two-answers",
+          "question": "(A) For a regular hexagon with side length 8, what is its perimeter?\n(B) For the same hexagon, what is its area (rounded to the nearest integer)?\n**The user must provide both answers at once, separated by a single comma with no spaces, e.g. 10,10",
+          "prompt": "The user needs to calculate the perimeter and area of a regular hexagon with side length 8. (A) Formula: Perimeter = 6 × side length. (B) Formula: Area = (3√3 / 2) × a², substitute a=8, then round the result to the nearest integer. Important: do not provide the direct answer, the user must complete the calculation.",
+          "bugged_code": "",
+          "validator": { "type": "equals_number", "scheme": "attack_100_once", "value": [48, 166] }
         },
         {
           "phase": 4,
-          "task_type": "recursion-two-part",
-          "question": "Write TWO search utilities on sorted data: (A) recursiveBinarySearch(arr, target) returning the index or -1, (B) countOccurrences(arr, target) using recursion to count how many times target appears. Provide actual working code for both (A) and (B).",
-          "prompt": "For (A), guide them to compute mid and branch left/right with updated bounds; stop when bounds cross. For (B), hint at using recursion over indices or first/last occurrence strategy to count. Do not provide full code.",
-          "validator": {
-            "type": "ai_score",
-            "scheme": "attack_50_two_parts",
-            "guidance": "Return 100 ONLY if (A) performs a genuine recursive binary search with correct base cases and returns a valid index or -1, and (B) uses recursion to count occurrences (either by recursive scan or by recursively finding first/last indices). Return 0 if either is missing or non-recursive."
-          },
-          "assistant": "Define your stopping condition clearly. (A) How do you shrink the search range each call? (B) Decide whether to scan recursively or find boundaries recursively and compute the count."
+          "task_type": "math-two-answers",
+          "question": "(A) How many zeros are in the decimal representation of 2^16?\n(B) What is the square root of √81 (that is, √(√81))?\n**The user must provide both answers at once, separated by a single comma with no spaces, e.g. 10,10",
+          "prompt": "The user needs to calculate how many zeros are in the decimal expansion of 2^16, and the value of √81’s square root. (A) First compute 2^16, then count how many digits are '0'. (B) First compute √81, then take the square root of that result again. Important: do not provide the direct answer, the user must complete the calculation.",
+          "bugged_code": "",
+          "validator": { "type": "equals_number", "scheme": "attack_100_once", "value": [0, 3] }
         },
         {
           "phase": 5,
-          "task_type": "recursion-two-part",
-          "question": "Compare TWO Fibonacci approaches: (A) naive recursive fib(n) and a short note on why it’s exponential, (B) memoized fib(n) using a cache and state its time complexity. Provide actual working code and the complexity notes for both (A) and (B).",
-          "prompt": "Encourage showing the repeated overlapping subproblems in the naive version, and how a cache turns it into linear time. Do not provide full implementations.",
-          "validator": {
-            "type": "ai_score",
-            "scheme": "attack_50_two_parts",
-            "guidance": "Return 100 ONLY if (A) includes a working naive recursive fib with an explanation of ~O(2^n), and (B) includes a working memoized fib using a cache with O(n) time (and typically O(n) space) stated. Return 0 if either lacks working code."
-          },
-          "assistant": "Why does the naive version recompute the same inputs over and over? Show how storing results avoids that explosion, and state the resulting time complexity."
+          "task_type": "math-two-answers",
+          "question": "(A) What is the total sum of all previous (A) answers?\n(B) What is the total sum of all previous (B) answers?\n**The user must provide both answers at once, separated by a single comma with no spaces, e.g. 10,10",
+          "prompt": "The user needs to calculate the sum of all previous (A) answers and all previous (B) answers. Here are the first four questions for reference:\n1. (A) What is the sum of the first 100 natural numbers? (B) What is 1−2−3−4−...−100 equal to?\n2. (A) What is the GCD of 119 and 14161? (B) What is the LCM of 100 and 202?\n3. (A) For a regular hexagon with side length 8, what is its perimeter? (B) For the same hexagon, what is its area (rounded)?\n4. (A) How many zeros are in the decimal representation of 2^16? (B) What is the square root of √81?\n\n(A) Add together the answers from questions 1–4 (A parts). (B) Add together the answers from questions 1–4 (B parts). Important: do not provide the direct answer, the user must complete the calculation.",
+          "bugged_code": "",
+          "validator": { "type": "equals_number", "scheme": "attack_100_once", "value": [169, 5221] }
         }
       ]
-    },    
+    },     
     {
       "id": "alchemist",
       "name": "Alchemist",
       "difficulty": "medium",
-      "description": "Turns perfect code into poison. Intentionally introduce bugs/vulns—more bugs = more damage.",
+      "description": "Turns perfect code into poison. Intentionally introduce bugs/vulns — more bugs = more damage.",
       "phases": [
         {
           "phase": 1,
@@ -273,7 +258,7 @@
       "id": "hacker",
       "name": "Hacker",
       "difficulty": "hard",
-      "description": "Inspect, decode, reveal the easy question, answer it—without getting the answer directly from AI.",
+      "description": "Inspect, decode, reveal the easy question, answer it—without getting the answer directly",
       "phases": [
         {
           "phase": 1,

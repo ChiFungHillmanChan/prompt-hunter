@@ -16,66 +16,54 @@
           "phase": 1,
           "task_type": "bugfix",
           "question": "修復壞咗嘅迴圈，令佢按順序打印數字 1 到 5（包括 5）。",
-          "prompt": "用戶嘗試修復一個應該打印數字 1 到 5 嘅 for 迴圈。目前嘅代碼只打印 1 到 4。你應該提供關於迴圈條件嘅提示，但千祈唔好透露確切嘅修復方法。引導佢檢查迴圈條件。",
+          "prompt": "用戶正嘗試修復一個應該打印 1 到 5 嘅 for 迴圈。現時嘅程式只打印到 1 到 4。你應該提供關於迴圈條件嘅提示，但唔好透露確切修復方法。引導佢檢查迴圈條件。",
           "bugged_code": "for(let i=1;i<5;i++){console.log(i)}",
-          "validator": {
-            "type": "ai_score",
-            "scheme": "attack_100_once",
-            "guidance": "檢查用戶係咪提供咗真正嘅程式碼嚟修復迴圈打印 1,2,3,4,5。必須係具體嘅程式碼例如 'i<=5' 或者 'for(let i=1;i<=5;i++)'。拒絕提示、解釋或者建議。只有當用戶提供真正嘅程式碼解決方案先回傳 100，其他一律回傳 0。"
-          },
-          "assistant": "我見到你個迴圈想印 1 到 5 嘅數字，但而家淨係印到 4。你有冇諗過點樣控制個迴圈停低嘅條件呢？有時個「小於」或者「大於」嘅符號，或者個數字本身，會影響到個迴圈會唔會做埋最後一次。不如你再檢查下個迴圈嘅條件，睇下點樣可以令佢包埋數字 5？"
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "檢查用戶有冇提供可運作嘅程式碼去修復迴圈，令輸出變成 1,2,3,4,5。必須係具體程式碼，例如 'i<=5' 或 'for(let i=1;i<=5;i++)'。提示、解釋或建議一律唔接受。只有提供到實際可行程式碼先回傳 100，否則回傳 0。" },
+          "assistant": "呢個迴圈睇落應該會打印 1 到 5，但而家早咗停。諗下迴圈嘅『條件』——係乜嘢決定咗佢幾時停止？"
         },
         {
           "phase": 2,
           "task_type": "bugfix",
-          "question": "修復 sum 函數，令 console.log(sum(2,3)) 輸出 5，而唔係 [object Promise]。",
-          "prompt": "呢個函數而家返回咗一個 Promise，而唔係實際嘅數值。你應該引導用戶明白 synchronous 同 asynchronous 嘅分別，但唔好畀出確切嘅程式碼。幫佢理解點解 Promise.resolve() 會造成問題。",
-          "bugged_code": "function sum(a,b){ return Promise.resolve(a+b); } console.log(sum(2,3));",
-          "validator": {
-            "type": "ai_score",
-            "scheme": "attack_100_once",
-            "guidance": "檢查用戶嘅修復係咪直接返回 a+b，而唔係 Promise.resolve()。函數應該同步返回數字。如果正確就回傳 100，否則回傳 0。"
-          },
-          "assistant": "我留意到呢個函數而家會返回一個 Promise 物件，而唔係你想要嘅數字結果。你可以試下諗吓，當我哋用 Promise.resolve() 嚟包裝一個值嘅時候會點呢？如果你想要個函數直接返回計算結果，可能要考慮下同步同非同步執行嘅分別。"
+          "question": "修復 sum 函數，令 console.log(sum(2,3)) 輸出 5。請提供令佢可運作嘅程式碼。",
+          "prompt": "用戶需要修復一個直接返回數值嘅函數。你應該引導佢，但唔好畀出確切解法。幫佢理解點樣完成一個函數嘅返回值。",
+          "bugged_code": "function sum(a,b){ return (?); } console.log(sum(2,3));",
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "檢查用戶嘅修復係咪令函數直接返回 a+b。函數應該返回一個實際嘅數字。正確回傳 100，錯誤或留空回傳 0。" },
+          "assistant": "個函數而家淨係返回咗一個問號。諗下應該點樣返回 a 同 b 嘅總和。"
         },
         {
           "phase": 3,
           "task_type": "bugfix",
           "question": "修復 isArmed 函數，令佢只會喺 status 等於 'armed' 嘅時候返回 true。",
-          "prompt": "用戶需要修復一個用咗賦值符號（=）而唔係比較符號（==, ===）嘅函數。你應該引導佢理解 assignment 同 comparison 嘅分別，但唔好直接畀出修正。",
+          "prompt": "用戶需要修復一個喺條件入面用咗賦值（=）而唔係比較（==、===）嘅函數。引導佢理解賦值同比較運算符嘅分別，但唔好直接畀出修正。",
           "bugged_code": "function isArmed(status){ if(status='armed'){return true;} return false; }",
-          "validator": {
-            "type": "ai_score",
-            "scheme": "attack_100_once",
-            "guidance": "檢查用戶有冇將 = 改成正確嘅比較運算符（== 或 ===）。條件應該係 status === 'armed' 或者 status == 'armed'。正確就回傳 100，否則回傳 0。"
-          },
-          "assistant": "我建議你可以仔細睇下個 if 條件嘅部分。喺 JavaScript 入面，= 符號係用嚟賦值嘅，而 === 或者 == 先係用嚟做比較。你覺得如果喺條件判斷入面用咗賦值符號會有咩影響呢？"
+          "validator": { "type": "ai_score", "scheme": "attack_100_once", "guidance": "檢查用戶有冇將賦值運算符 (=) 改成比較運算符（== 或 ===）。條件應該係 status === 'armed' 或 status == 'armed'。正確回傳 100，否則回傳 0。" },
+          "assistant": "睇清楚 if 入面嘅條件。當你喺條件度用 = 會發生咩事？"
         },
         {
           "phase": 4,
           "task_type": "bugfix",
-          "question": "加 JavaScript，令點擊 launch 按鈕時會喺 console 打印 'launched'。",
-          "prompt": "用戶需要幫個按鈕加事件處理器。引導佢了解 JavaScript 嘅事件監聽（addEventListener）同 click 事件，但唔好直接畀完整代碼。幫佢理解點樣響應用戶操作。",
-          "bugged_code": "<button id='launch'></button>",
+          "question": "修復按鈕，令佢被點擊時會喺 console 顯示 'launched'。",
+          "prompt": "用戶需要用 addEventListener 將按鈕連接到一個動作。引導佢知道按鈕可以對點擊作出反應，並需要喺按鈕嘅 click 事件上掛一段 JavaScript。唔好畀完整代碼，只解釋處理點擊事件嘅概念。",
+          "bugged_code": "<button id=\"launch\">Launch</button>\n<script>\n  // Missing: how to run console.log('launched') when button is clicked\n</script>",
           "validator": {
             "type": "ai_score",
             "scheme": "attack_100_once",
-            "guidance": "檢查用戶有冇加到一個 click event handler 喺 #launch 按鈕，並且喺點擊時 log 'launched'。可以用 addEventListener 或者 onclick。如果正確就回傳 100，否則回傳 0。"
+            "guidance": "檢查用戶有冇為 #launch 按鈕加上一個點擊事件處理器，並且喺點擊時 log 出 'launched'。有效方案包括 addEventListener 或 onclick。正確回傳 100，否則回傳 0。"
           },
-          "assistant": "我見到你有個按鈕元素，不過好似未有設定事件處理器嚟回應用戶點擊。你知唔知道有咩方法可以令用戶點擊個按鈕嘅時候觸發特定動作？你可以考慮下用 addEventListener 或者其他處理點擊事件嘅方法。"
+          "assistant": "而家個按鈕未做任何嘢。喺 JavaScript 入面，你可以用 addEventListener 去處理點擊事件。"
         },
         {
           "phase": 5,
           "task_type": "bugfix",
-          "question": "修復 launchSequence 函數，令佢只會喺按鈕被點擊時執行一次，按順序打印 1 到 5，最後再打印 'launched' —— 而唔好返回 Promise。",
-          "prompt": "用戶需要修復呢個函數入面嘅多個問題：迴圈提早停咗、返回咗 Promise 而唔係 log、同埋 click handler 應該正確觸發程序。引導佢諗下迴圈條件、同步同非同步返回、同埋事件處理，但唔好直接畀出修正。",
-          "bugged_code": "function launchSequence(){ for(let i=1;i<5;i++){ console.log(i); } return Promise.resolve('launched'); } document.getElementById('launch').onclick = launchSequence;",
+          "question": "修復個函數，令 countVowels('Hello') 會返回 2，同 countVowels('Sky') 會返回 0。",
+          "prompt": "用戶需要計算一個字串入面嘅元音（a, e, i, o, u）。而家嘅 bug 係條件用咗賦值符號（=）而唔係比較符號（== 或 ===）。幫佢理解賦值同比較嘅分別，但唔好直接畀出修正。",
+          "bugged_code": "function countVowels(str){\n  let count = 0;\n  for(let i=0;i<str.length;i++){\n    const ch = str[i].toLowerCase();\n    if (ch = 'a' || ch = 'e' || ch = 'i' || ch = 'o' || ch = 'u') {\n      count++;\n    }\n  }\n  return count;\n}\nconsole.log(countVowels('Hello')); // should be 2\nconsole.log(countVowels('Sky'));   // should be 0",
           "validator": {
             "type": "ai_score",
             "scheme": "attack_100_once",
-            "guidance": "檢查用戶有冇修復以下幾點：迴圈正確打印 1 到 5、移除 Promise.resolve 而改為 log 'launched'、同埋 click 按鈕後先執行。正確就回傳 100，否則回傳 0。"
+            "guidance": "只有當用戶嘅修復可以不分大小寫正確計算元音先回傳 100。特別係 countVowels('Hello') 必須輸出 2，而 countVowels('Sky') 必須輸出 0。接受將條件改為正確嘅相等比較（== 或 ===）等方案。否則或留空回傳 0。"
           },
-          "assistant": "你嘅函數已經好接近啦！不過我留意到仲有幾個地方可以改善。個迴圈好似停得早咗少少，而且個函數而家會返回 Promise 而唔係直接輸出結果。你可以諗下，當用戶點擊按鈕嘅時候，我哋想要嘅效果係咪應該直接顯示順序嘅數字同「launched」訊息呢？"
+          "assistant": "細心睇下 if 個條件。用單一個 = 代表『賦值』，唔係『比較』。當你想比較一個字元係咪 'a'、'e'、'i'、'o'、'u' 嘅時候應該用邊種運算符？你喺之前嘅階段學過。"
         }
       ]
     },    
@@ -151,75 +139,55 @@
       "id": "necromancer",
       "name": "死靈法師",
       "difficulty": "中等",
-      "description": "從遞迴同經典算法嘅深淵中召喚出解法。",
+      "description": "從數學深淵召喚邏輯謎題 -- 死靈法師每次都會連續攻擊兩次",
       "phases": [
         {
           "phase": 1,
-          "task_type": "recursion-two-part",
-          "question": "寫兩個遞迴函數：(A) sumDigits(n) 回傳非負整數 n 嘅各位數字總和；(B) climbWays(n) 計算上 n 級樓梯（每次可上 1 或 2 級）嘅方法數。請提供 (A) 同 (B) 兩部分實際可運行嘅代碼。",
-          "prompt": "引導用戶識別基底情況同遞迴步驟：(A) 用取餘/除法剝走最後一位；n < 10 或 n === 0 時停止；(B) 諗下 f(n) = f(n-1) + f(n-2)，並為 n <= 1 設置基底。唔好提供完整代碼。",
-          "validator": {
-            "type": "ai_score",
-            "scheme": "attack_50_two_parts",
-            "guidance": "只有當 (A) 以遞迴方式逐步縮減 n 並正確處理基底、(B) 使用遞迴同正確基底（例如 n<=1）並回傳 f(n-1)+f(n-2) 時回傳 100；如其中一部分缺失或唔係遞迴，回傳 0。"
-          },
-          "assistant": "先諗基底。(A) 有邊個最細嘅 n 個答案一眼就知？每一步點樣剝走最後一位？(B) 上到第 n 級可以由邊啲較細嘅子問題組成？"
+          "task_type": "math-two-answers",
+          "question": "(A) 頭 100 個自然數嘅總和係幾多？\n(B) 1−2−3−4−...−100 等於幾多？\n**用戶要一次過提供兩個答案，中間用一個逗號，唔好有空格，例如：10,-10",
+          "prompt": "用戶要計算 頭 100 個自然數嘅總和係幾多，及 1−2−3−4−...−100 等於幾多？(A) 使用公式 (n)(n+1)/2，代入 n=100 來計算總和。 (B) 用 1 減去 (2+3+4+...+100)。切記：唔可以直接顯示答案，要由用戶自己完成計算。",
+          "bugged_code": "",
+          "validator": { "type": "equals_number", "scheme": "attack_100_once", "value": [5050, -5048] }
         },
         {
           "phase": 2,
-          "task_type": "recursion-two-part",
-          "question": "實作兩個遞迴工具：(A) flatten(arr) 將深度巢狀陣列攤平成新嘅一維陣列；(B) maxDepth(obj) 回傳純物件嘅最大巢狀深度（null → 深度 0）。請提供 (A) 同 (B) 兩部分實際可運行嘅代碼。",
-          "prompt": "提示用戶做型別檢查：(A) 用 Array.isArray 並遞迴 concat 子陣列結果；(B) 對 null/非物件回傳 0，對物件則取各屬性深度嘅最大值再 +1。唔好提供完整代碼。",
-          "validator": {
-            "type": "ai_score",
-            "scheme": "attack_50_two_parts",
-            "guidance": "只有當 (A) 以遞迴方式正確攤平所有巢狀陣列並回傳新陣列、(B) 以遞迴方式遍歷物件屬性，對 null/非物件回 0，物件回最大子深度+1 時回傳 100；如其中一部分缺失或唔係遞迴，回傳 0。"
-          },
-          "assistant": "決定咩時候需要深入遞迴。(A) 見到入面仲有陣列，就潛入再合併。(B) 算深度要點聚合每個巢狀屬性嘅結果？"
+          "task_type": "math-two-answers",
+          "question": "(A) 119 同 14161 嘅最大公因數（GCD）係幾多？\n(B) 100 同 202 嘅最小公倍數（LCM）係幾多？\n**用戶要一次過提供兩個答案，中間用一個逗號，唔好有空格，例如：10,10",
+          "prompt": "用戶要計算 119 同 14161 嘅最大公因數同埋 100 同 202 嘅最小公倍數。(A) GCD 可以用除法測試：如果 14161 可以被 119 整除，咁 119 就係 GCD。 (B) LCM 公式：LCM(a,b) = (a × b) ÷ GCD(a,b)。切記：唔可以直接顯示答案，要由用戶自己完成計算。",
+          "bugged_code": "",
+          "validator": { "type": "equals_number", "scheme": "attack_100_once", "value": [119, 10100] }
         },
         {
           "phase": 3,
-          "task_type": "recursion-two-part",
-          "question": "產出兩個解法：(A) generateParentheses(n=3) 回傳 3 對括號嘅所有有效組合；(B) 用你嘅遞迴位數總和方法計算 sumDigits(99)。請提供 (A) 同 (B) 兩部分實際可運行嘅代碼。",
-          "prompt": "指導括號生成嘅回溯規則：當 opens < n 可以加 '('；當 closes < opens 可以加 ')'。位數總和重用剝位邏輯並清晰定義基底。唔好提供完整代碼。",
-          "validator": {
-            "type": "ai_score",
-            "scheme": "attack_50_two_parts",
-            "guidance": "只有當 (A) 以遞迴/回溯方式產生 n=3 的 5 個有效組合、(B) 為遞迴位數總和並對 99 得出 18 時回傳 100；如其中一部分冇可運行代碼則回傳 0。"
-          },
-          "assistant": "追蹤已放嘅 '(' 同 ')' 數量。只有當唔會破壞有效性先可以加 ')'. 對於 99，基底係乜？每步點樣縮細數字？"
+          "task_type": "math-two-answers",
+          "question": "(A) 等邊六邊形邊長 8，周界係幾多？\n(B) 同一個六邊形，面積（取整數）係幾多？\n**用戶要一次過提供兩個答案，中間用一個逗號，唔好有空格，例如：10,10",
+          "prompt": "用戶要計算 一個等邊六邊形邊長 8 嘅周界同面積。(A) 周界公式：6 × 邊長。 (B) 面積公式：(3√3 / 2) × a²，代入 a=8，再將結果四捨五入到整數。切記：唔可以直接顯示答案，要由用戶自己完成計算。",
+          "bugged_code": "",
+          "validator": { "type": "equals_number", "scheme": "attack_100_once", "value": [48, 166] }
         },
         {
           "phase": 4,
-          "task_type": "recursion-two-part",
-          "question": "喺排序好嘅資料上寫兩個搜尋工具：(A) recursiveBinarySearch(arr, target) 回傳索引或 -1；(B) countOccurrences(arr, target) 用遞迴計算 target 出現次數。請提供 (A) 同 (B) 兩部分實際可運行嘅代碼。",
-          "prompt": "(A) 計 mid，根據比較結果遞迴到左/右區間；界限交叉時停止。(B) 可用遞迴索引掃描，或者遞迴搵首/末次出現再計數。唔好提供完整代碼。",
-          "validator": {
-            "type": "ai_score",
-            "scheme": "attack_50_two_parts",
-            "guidance": "只有當 (A) 係真正嘅遞迴二分搜尋、具備正確基底並回有效索引或 -1，且 (B) 以遞迴方式計算出現次數（遞迴掃描或遞迴邊界法皆可）時回傳 100；否則回傳 0。"
-          },
-          "assistant": "清楚定義停止條件。(A) 每次呼叫點樣縮窄搜尋範圍？(B) 決定用逐項遞迴掃描，定係先遞迴搵邊界再計次數。"
+          "task_type": "math-two-answers",
+          "question": "(A) 2^16 嘅十進位表示入面有幾多個 0？\n(B) √81 嘅平方根（即 √(√81)）係幾多？\n**用戶要一次過提供兩個答案，中間用一個逗號，唔好有空格，例如：10,10",
+          "prompt": "用戶要計算 2^16 嘅十進位表示入面有幾多個 0，以及 √81 嘅平方根再開方一次。(A) 先計算 2^16，再數下結果入面有幾多個數字 0。 (B) 先計算 √81，再開方一次。切記：唔可以直接顯示答案，要由用戶自己完成計算。",
+          "bugged_code": "",
+          "validator": { "type": "equals_number", "scheme": "attack_100_once", "value": [0, 3] }
         },
         {
           "phase": 5,
-          "task_type": "recursion-two-part",
-          "question": "比較兩種 Fibonacci 實作：(A) 天真遞迴 fib(n)；(B) 用快取嘅 memoized fib(n)。兩部分都要包含可運行代碼同複雜度說明。",
-          "prompt": "鼓勵示範如何重複計算重疊子問題，以及快取點樣將時間降至線性。不要提供完整實作。",
-          "validator": {
-            "type": "ai_score",
-            "scheme": "attack_50_two_parts",
-            "guidance": "只有當 (A) 包含可運行嘅天真遞迴 fib ；(B) 包含使用快取嘅 memo 版本，回傳 100；如任一缺少可運行代碼則回傳 0。"
-          },
-          "assistant": "點解天真版本會一再重算同一輸入？展示點樣儲存中間結果去避免爆炸，並清楚寫出時間複雜度。"
+          "task_type": "math-two-answers",
+          "question": "(A) 剛才所有 (A) 答案總和係幾多？\n(B) 剛才所有 (B) 答案總和係幾多？\n**用戶要一次過提供兩個答案，中間用一個逗號，唔好有空格，例如：10,10",
+          "prompt": "用戶要計算 剛才所有 (A) 答案嘅總和，及所有 (B) 答案嘅總和。以下係前四題嘅問題：\n1. (A) 頭 100 個自然數嘅總和係幾多？ (B) 1−2−3−4−...−100 等於幾多？\n2. (A) 119 同 14161 嘅最大公因數（GCD）係幾多？ (B) 100 同 202 嘅最小公倍數（LCM）係幾多？\n3. (A) 等邊六邊形邊長 8，周界係幾多？ (B) 同一個六邊形，面積（取整數）係幾多？\n4. (A) 2^16 嘅十進位表示入面有幾多個 0？ (B) √81 嘅平方根（即 √(√81)）係幾多？\n\n(A) 將第 1 至 4 題嘅 (A) 答案加埋。 (B) 將第 1 至 4 題嘅 (B) 答案加埋。切記：唔可以直接顯示答案，要由用戶自己完成計算。",
+          "bugged_code": "",
+          "validator": { "type": "equals_number", "scheme": "attack_100_once", "value": [169, 5221] }
         }
       ]
-    },    
+    },           
     {
       "id": "alchemist",
       "name": "鍊金術師",
       "difficulty": "中等",
-      "description": "將完美程式碼變成毒藥。有意引入漏洞／錯誤—越多錯誤 = 傷害越大。",
+      "description": "將完美程式碼變成毒藥。有意引入漏洞／錯誤 — 越多錯誤 = 傷害越大。",
       "phases": [
         {
           "phase": 1,

@@ -14,6 +14,18 @@ export async function validateAnswer(
     case 'not_equals':
       return { ok: text !== v.value, message: text !== v.value ? 'Correct' : 'Should not equal' };
     case 'equals_number': {
+      // Handle array of numbers (for necromancer x,y format)
+      if (Array.isArray(v.value)) {
+        const parts = text.split(',').map(p => p.trim());
+        if (parts.length !== v.value.length) {
+          return { ok: false, message: `Expected ${v.value.length} numbers, got ${parts.length}` };
+        }
+        const numbers = parts.map(p => Number(p));
+        const expectedNumbers = v.value.map(val => Number(val));
+        const allMatch = numbers.every((n, i) => !Number.isNaN(n) && n === expectedNumbers[i]);
+        return { ok: allMatch, message: allMatch ? 'Correct' : 'Wrong numbers' };
+      }
+      // Handle single number
       const n = Number(text);
       const value = Number(v.value);
       return { ok: !Number.isNaN(n) && n === value, message: n === value ? 'Correct' : 'Wrong number' };

@@ -19,6 +19,7 @@ export default function SettingsMenu() {
   const [newApiKey, setNewApiKey] = React.useState('');
   const [showKeyInput, setShowKeyInput] = React.useState(false);
   const [selectedCharacter, setSelectedCharacter] = React.useState<{ name: string; id: string; difficulty: string; description?: string } | null>(null);
+  const [showRestartConfirmation, setShowRestartConfirmation] = React.useState<{ name: string; id: string } | null>(null);
 
   const onRemoveKey = () => {
     sessionStorage.removeItem('gemini_api_key');
@@ -71,40 +72,49 @@ export default function SettingsMenu() {
   };
 
   const onRestartCharacter = (character: { name: string; id: string }) => {
-    if (confirm(settings.language === 'zh-hk' 
-      ? `確定要重新開始${character.name}嘅進度嗎？呢個操作會清除佢嘅所有階段進度。` 
-      : `Are you sure you want to restart ${character.name}? This will clear all stage progress for this character.`
-    )) {
+    setShowRestartConfirmation(character);
+  };
+
+  const onConfirmRestart = () => {
+    if (showRestartConfirmation) {
       // Clear character progress from localStorage
       try {
-        localStorage.removeItem(`ph-progress-${character.id}`);
+        localStorage.removeItem(`ph-progress-${showRestartConfirmation.id}`);
       } catch {
         // Failed to remove character progress
       }
       
       // Reset completed role in progress store
-      useProgress.getState().resetRole(character.id);
+      useProgress.getState().resetRole(showRestartConfirmation.id);
       
-      // Close modal and show success message
+      // Close modals
       setSelectedCharacter(null);
-      alert(settings.language === 'zh-hk' 
-        ? `${character.name}嘅進度已重新開始！` 
-        : `${character.name} progress has been restarted!`
-      );
+      setShowRestartConfirmation(null);
+      
+      // Navigate directly to the game
+      nav(ROUTES.PLAY(showRestartConfirmation.id));
     }
   };
 
-  // Handle escape key to close modal
+  const onCancelRestart = () => {
+    setShowRestartConfirmation(null);
+  };
+
+  // Handle escape key to close modals
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && selectedCharacter) {
-        setSelectedCharacter(null);
+      if (e.key === 'Escape') {
+        if (showRestartConfirmation) {
+          setShowRestartConfirmation(null);
+        } else if (selectedCharacter) {
+          setSelectedCharacter(null);
+        }
       }
     };
     
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [selectedCharacter]);
+  }, [selectedCharacter, showRestartConfirmation]);
 
 
   return (
@@ -373,7 +383,7 @@ export default function SettingsMenu() {
                     </div>
                     <div className="text-center p-3 bg-blue-500/20 rounded-lg border border-blue-500/30">
                       <div className="text-sm text-blue-300 mb-1">{selectedCharacter.name} {t('atk')}</div>
-                      <div className="text-xl font-bold text-white">{characterStats.attack} DMG</div>
+                      <div className="text-xl font-bold text-white">{characterStats.attack} {t('dmg')}</div>
                     </div>
                   </div>
                 );
@@ -410,11 +420,52 @@ export default function SettingsMenu() {
               {hasCharacterProgress(selectedCharacter.id) && (
                 <button
                   onClick={() => onRestartCharacter(selectedCharacter)}
-                  className="px-4 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium transition-colors"
+                  className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium transition-colors"
                 >
                   {t('restartCharacter')}
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Restart Confirmation Modal */}
+      {showRestartConfirmation && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+          <div className="bg-slate-800 rounded-xl p-6 max-w-sm w-full border border-red-500/30 shadow-2xl">
+            {/* Warning Icon */}
+            <div className="text-center mb-6">
+              <div className="text-red-400 text-5xl mb-3">⚠️</div>
+              <h2 className="text-xl font-bold text-white mb-2">
+                {settings.language === 'zh-hk' ? '重新開始角色' : 'Restart Character'}
+              </h2>
+            </div>
+
+            {/* Confirmation Message */}
+            <div className="mb-6">
+              <p className="text-slate-300 text-center leading-relaxed">
+                {settings.language === 'zh-hk' 
+                  ? `確定要重新開始${showRestartConfirmation.name}嘅進度嗎？呢個操作會清除佢嘅所有階段進度並直接開始新遊戲。`
+                  : `Are you sure you want to restart ${showRestartConfirmation.name}? This will clear all stage progress for this character and start a new game directly.`
+                }
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={onCancelRestart}
+                className="flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg text-white font-medium transition-colors"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                onClick={onConfirmRestart}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium transition-colors"
+              >
+                {settings.language === 'zh-hk' ? '確認重新開始' : 'Confirm Restart'}
+              </button>
             </div>
           </div>
         </div>

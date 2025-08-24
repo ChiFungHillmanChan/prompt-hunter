@@ -9,7 +9,7 @@ export function getCharacterStats(roleId: string) {
     case 'bard':
       return { health: 80, attack: 100, specialtyKey: 'creativeMusic' as const };
     case 'necromancer':
-      return { health: 500, attack: 50, specialtyKey: 'darkArtsAlgorithms' as const };
+      return { health: 300, attack: 50, specialtyKey: 'darkArtsAlgorithms' as const };
     case 'alchemist':
       return { health: 200, attack: 20, specialtyKey: 'dataTransformation' as const };
     case 'hacker':
