@@ -54,12 +54,12 @@ function getGameTypes(phases: any[]) {
 }
 
 function pickSprite(id: string): string {
-  if (id.toLowerCase().includes('bard')) return '/src/assets/sprites/bard.svg';
-  if (id.toLowerCase().includes('necro')) return '/src/assets/sprites/necromancer.svg';
-  if (id.toLowerCase().includes('alch')) return '/src/assets/sprites/alchemist.svg';
-  if (id.toLowerCase().includes('hack')) return '/src/assets/sprites/hacker.svg';
-  if (id.toLowerCase().includes('myst')) return '/src/assets/sprites/mysterious.svg';
-  return '/src/assets/sprites/engineer.svg';
+  if (id.toLowerCase().includes('bard')) return '/sprites/bard.svg';
+  if (id.toLowerCase().includes('necro')) return '/sprites/necromancer.svg';
+  if (id.toLowerCase().includes('alch')) return '/sprites/alchemist.svg';
+  if (id.toLowerCase().includes('hack')) return '/sprites/hacker.svg';
+  if (id.toLowerCase().includes('myst')) return '/sprites/mysterious.svg';
+  return '/sprites/engineer.svg';
 }
 
 function getDifficultyColor(difficulty: string) {

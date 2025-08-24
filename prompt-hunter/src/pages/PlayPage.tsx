@@ -32,12 +32,12 @@ function getCharacterStats(roleId: string) {
 }
 
 function pickCharacterSprite(id: string): string {
-  if (id.toLowerCase().includes('bard')) return '/src/assets/sprites/bard.svg';
-  if (id.toLowerCase().includes('necro')) return '/src/assets/sprites/necromancer.svg';
-  if (id.toLowerCase().includes('alch')) return '/src/assets/sprites/alchemist.svg';
-  if (id.toLowerCase().includes('hack')) return '/src/assets/sprites/hacker.svg';
-  if (id.toLowerCase().includes('myst')) return '/src/assets/sprites/mysterious.svg';
-  return '/src/assets/sprites/engineer.svg';
+  if (id.toLowerCase().includes('bard')) return '/sprites/bard.svg';
+  if (id.toLowerCase().includes('necro')) return '/sprites/necromancer.svg';
+  if (id.toLowerCase().includes('alch')) return '/sprites/alchemist.svg';
+  if (id.toLowerCase().includes('hack')) return '/sprites/hacker.svg';
+  if (id.toLowerCase().includes('myst')) return '/sprites/mysterious.svg';
+  return '/sprites/engineer.svg';
 }
 
 export default function PlayPage() {
@@ -295,9 +295,9 @@ export default function PlayPage() {
 }
 
 function pickMonsterSprite(phase: number): string {
-  if (phase % 3 === 1) return '/src/assets/sprites/monster_slime.svg';
-  if (phase % 3 === 2) return '/src/assets/sprites/monster_imp.svg';
-  return '/src/assets/sprites/monster_bat.svg';
+  if (phase % 3 === 1) return '/sprites/monster_slime.svg';
+  if (phase % 3 === 2) return '/sprites/monster_imp.svg';
+  return '/sprites/monster_bat.svg';
 }
 
 
