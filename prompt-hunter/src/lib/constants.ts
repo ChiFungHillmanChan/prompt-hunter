@@ -9,7 +9,7 @@ export const PACK_URLS = {
 export const PACK_URL = '/content/AI_monster_pack_en.json'; // Keep for backward compatibility
 
 export const DEFAULTS = {
-  attackIntervalMs: 3000,
+  attackIntervalMs: 5000,
   monsterDamagePerTick: 1,
   playerMaxHP: 100,
   playerAnswerDamage: 10,
