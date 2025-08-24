@@ -97,32 +97,32 @@
         {
           "phase": 1,
           "task_type": "recursion-two-part",
-          "prompt": "Your goal:\n- (A) Define a recursive function that sums digits of n.\n- (B) Define a recursive function counting ways to climb n with 1 or 2 steps.\nConstraints:\n- Provide conceptual or code answer; correctness over style.\nFormat:\n- Label parts clearly: A) ... B) ...",
-          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 if both recursive answers are valid and correct. Return 0 otherwise." }
+          "prompt": "Your goal:\n- (A) Define a recursive function that sums digits of n.\n- (B) Define a recursive function counting ways to climb n with 1 or 2 steps.\nConstraints:\n- Must provide actual working code, not explanations.\nFormat:\n- Label parts clearly: A) ... B) ...",
+          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 ONLY if both parts contain actual working code (not explanations). Return 0 for any conceptual answers or explanations without code." }
         },
         {
           "phase": 2,
           "task_type": "recursion-two-part",
-          "prompt": "Your goal:\n- (A) Recursively flatten a nested array.\n- (B) Recursively compute max depth of a nested object; null => 0.\nConstraints:\n- Conceptual or code ok.\nFormat:\n- Label parts: A) ... B) ...",
-          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 if both solutions are correct. Return 0 otherwise." }
+          "prompt": "Your goal:\n- (A) Recursively flatten a nested array.\n- (B) Recursively compute max depth of a nested object; null => 0.\nConstraints:\n- Must provide actual working code, not explanations.\nFormat:\n- Label parts: A) ... B) ...",
+          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 ONLY if both parts contain actual working code (not explanations). Return 0 for any conceptual answers or explanations without code." }
         },
         {
           "phase": 3,
           "task_type": "recursion-two-part",
-          "prompt": "Your goal:\n- (A) Generate all valid parentheses for n=3.\n- (B) Recursively compute sumDigits(99).\nConstraints:\n- Conceptual or code ok.\nFormat:\n- Label parts: A) ... B) ...",
-          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 if both recursive tasks are solved correctly. Return 0 otherwise." }
+          "prompt": "Your goal:\n- (A) Generate all valid parentheses for n=3.\n- (B) Recursively compute sumDigits(99).\nConstraints:\n- Must provide actual working code, not explanations.\nFormat:\n- Label parts: A) ... B) ...",
+          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 ONLY if both parts contain actual working code (not explanations). Return 0 for any conceptual answers or explanations without code." }
         },
         {
           "phase": 4,
           "task_type": "recursion-two-part",
-          "prompt": "Your goal:\n- (A) Explain the base case for recursion on nested arrays.\n- (B) Provide one working input and output example.\nConstraints:\n- Keep answers concise and precise.\nFormat:\n- Label parts: A) ... B) ...",
-          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 if both explanation and example are correct. Return 0 otherwise." }
+          "prompt": "Your goal:\n- (A) Show code for the base case in a recursive array function.\n- (B) Provide working code with input/output example.\nConstraints:\n- Must include actual code snippets.\nFormat:\n- Label parts: A) ... B) ...",
+          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 ONLY if both parts contain actual code (not just explanations). Return 0 for text-only explanations without code." }
         },
         {
           "phase": 5,
           "task_type": "recursion-two-part",
-          "prompt": "Your goal:\n- (A) Explain why naive recursion for Fibonacci is exponential time.\n- (B) State memoized time complexity.\nConstraints:\n- Be concise.\nFormat:\n- Label parts: A) ... B) ...",
-          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 if both conceptual answers are correct. Return 0 otherwise." }
+          "prompt": "Your goal:\n- (A) Show naive recursive Fibonacci code and explain why it's exponential.\n- (B) Show memoized Fibonacci code and state its time complexity.\nConstraints:\n- Must include actual code examples.\nFormat:\n- Label parts: A) ... B) ...",
+          "validator": { "type": "ai_score", "scheme": "attack_50_two_parts", "guidance": "Return 100 ONLY if both parts include actual Fibonacci code examples. Return 0 for explanations without code." }
         }
       ]
     },

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "name": "ai_monster_pack_v4_revised_questions",
+    "name": "角色預覽",
     "created_utc": "2025-08-24T00:00:00.000Z",
     "phases_per_run": 5,
     "validator_api_note": "Validators include ai_score which must call an LLM and return ONLY a number as a string."

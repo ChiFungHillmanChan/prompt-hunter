@@ -7,26 +7,7 @@ import { maskKey } from '../lib/gemini';
 import { useTranslation } from '../hooks/useTranslation';
 import React from 'react';
 
-function getCharacterStats(roleId: string) {
-  const baseStats = { health: 80, attack: 25 };
-  
-  switch (roleId) {
-    case 'engineer':
-      return { health: 300, attack: 100, specialty: 'Debugging & Logic' };
-    case 'bard':
-      return { health: 150, attack: 100, specialty: 'Creative Writing & Music' };
-    case 'necromancer':
-      return { health: 100, attack: 50, specialty: 'Dark Arts & Algorithms' };
-    case 'alchemist':
-      return { health: 100, attack: 20, specialty: 'Data Transformation' };
-    case 'hacker':
-      return { health: 50, attack: 100, specialty: 'Security & Systems' };
-    case 'mysterious':
-      return { health: 100000000, attack: 100000000, specialty: 'Unknown Powers' };
-    default:
-      return { ...baseStats, specialty: 'General Combat' };
-  }
-}
+import { getCharacterStats } from '../lib/characterStats';
 
 export default function SettingsMenu() {
   const nav = useNavigate();

@@ -3,55 +3,28 @@ import { useProgress } from '../store/progress';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../lib/routes';
 import { useTranslation } from '../hooks/useTranslation';
+import { getCharacterStats } from '../lib/characterStats';
 
-function getCharacterStats(roleId: string) {
-  const baseStats = { health: 80, attack: 25 };
-  
-  switch (roleId) {
-    case 'engineer':
-      return { health: 300, attack: 100, specialty: 'Debugging & Logic' };
-    case 'bard':
-      return { health: 150, attack: 100, specialty: 'Creative Writing & Music' };
-    case 'necromancer':
-      return { health: 100, attack: 50, specialty: 'Dark Arts & Algorithms' };
-    case 'alchemist':
-      return { health: 100, attack: 20, specialty: 'Data Transformation' };
-    case 'hacker':
-      return { health: 50, attack: 100, specialty: 'Security & Systems' };
-    case 'mysterious':
-      return { health: 100000000, attack: 100000000, specialty: 'Unknown Powers' };
-    default:
-      return { ...baseStats, specialty: 'General Combat' };
+
+
+function getGameTypes(id: string): string[] {
+  if (id.toLowerCase().includes('bard')) {
+    return ['typeCreativeTasks', 'typeCombatChallenge'];
   }
-}
-
-function getGameTypes(phases: any[]) {
-  const typeKeys = new Set<string>();
-  phases.forEach((phase) => {
-    switch (phase.task_type) {
-      case 'bugfix':
-        typeKeys.add('typeDebugCode');
-        break;
-      case 'optimization':
-        typeKeys.add('typeOptimizePerformance');
-        break;
-      case 'creative':
-        typeKeys.add('typeCreativeTasks');
-        break;
-      case 'logic':
-        typeKeys.add('typeLogicPuzzles');
-        break;
-      case 'security':
-        typeKeys.add('typeSecurityChallenges');
-        break;
-      case 'data':
-        typeKeys.add('typeDataProcessing');
-        break;
-      default:
-        typeKeys.add('typeCombatChallenge');
-    }
-  });
-  return Array.from(typeKeys);
+  if (id.toLowerCase().includes('necro')) {
+    return ['typeLogicPuzzles', 'typeOptimizePerformance', 'typeCombatChallenge'];
+  }
+  if (id.toLowerCase().includes('alch')) {
+    return ['typeSecurityChallenges', 'typeCombatChallenge'];
+  }
+  if (id.toLowerCase().includes('hack')) {
+    return ['typeSecurityChallenges', 'typeDebugCode', 'typeCombatChallenge'];
+  }
+  if (id.toLowerCase().includes('myst')) {
+    return ['typeCreativeTasks'];
+  }
+  // Default fallback (Engineer or others)
+  return ['typeDebugCode', 'typeCombatChallenge'];
 }
 
 function pickSprite(id: string): string {
@@ -130,7 +103,7 @@ export default function PackViewer() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {pack.roles.map((role) => {
             const stats = getCharacterStats(role.id);
-            const gameTypes = getGameTypes(role.phases);
+            const gameTypes = getGameTypes(role.id);
             const sprite = pickSprite(role.id);
             const isCompleted = completedRoles.includes(role.id);
             
@@ -171,7 +144,7 @@ export default function PackViewer() {
                     </p>
                     
                     <div className="text-xs text-slate-400">
-                      {t('specialty')}: <span className="text-slate-300 font-medium">{stats.specialty}</span>
+                      {t('specialty')}: <span className="text-slate-300 font-medium">{t(stats.specialtyKey as any)}</span>
                     </div>
                   </div>
                 </div>

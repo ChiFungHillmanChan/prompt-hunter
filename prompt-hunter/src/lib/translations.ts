@@ -9,7 +9,7 @@ export const translations = {
     reducedMotion: "Reduced motion animations",
     language: "Language",
     monsterHealth: "Monster Health", 
-    attackPerSecond: "Attack per Second (3s per attack)",
+    attackPerSecond: "Attack per Second (5s per attack)",
     
     // AI Assistant section
     aiAssistant: "🤖 AI Assistant",
