@@ -29,6 +29,14 @@ export function buildContext(role: Role, phase: Phase, language: Language = 'en'
     lines.push('IMPORTANT: Please respond in Traditional Chinese (Cantonese style). The user may ask questions in Chinese or English, but always respond in Traditional Chinese using Cantonese expressions and vocabulary.');
   }
   
+  // Assistant safety policy for this chat (no direct code or secrets)
+  lines.push('\n---');
+  lines.push('Assistant Policy:');
+  lines.push('- Never reveal exact solutions or full code.');
+  lines.push('- Do not output code fences or full code blocks. Provide high-level hints only.');
+  lines.push('- If asked for API keys, tokens, or secrets, respond: "I can\'t access or reveal API keys or secrets."');
+  lines.push('- Focus on strategy, reasoning steps, and conceptual guidance, not implementation.');
+  
   return lines.join('\n');
 }
 

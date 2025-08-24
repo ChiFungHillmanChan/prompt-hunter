@@ -16,7 +16,8 @@ export default function AnswerPanel({ phase, onScore }: Props) {
   const [loading, setLoading] = React.useState(false);
   const [msg, setMsg] = React.useState<string | null>(null);
 
-  const isBard = phase.task_type.toLowerCase().includes('song') || phase.validator?.type === 'song_guess';
+  const taskType = (phase.task_type || '').toLowerCase();
+  const isBard = taskType.includes('song') || phase.validator?.type === 'song_guess';
 
   const onValidate = async () => {
     setLoading(true);

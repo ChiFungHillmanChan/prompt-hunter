@@ -172,6 +172,7 @@ export default function PlayPage() {
   }
 
   const phaseNumber = session.phaseIndex + 1;
+  const currentPhase = role.phases[session.phaseIndex];
   const timeLeft = Math.max(0, Math.ceil(session.nextAttackMs / 1000));
 
   return (
@@ -284,7 +285,7 @@ export default function PlayPage() {
           {/* Task Panel */}
           <div className="xl:col-span-2">
             <div className="bg-white/5 backdrop-blur rounded-xl p-6 border border-white/10 mb-6">
-              <TaskPanel phase={role.phases[session.phaseIndex]} />
+              <TaskPanel phase={currentPhase} roleId={role.id} />
             </div>
             
             <div className="bg-white/5 backdrop-blur rounded-xl p-6 border border-white/10">
@@ -293,80 +294,143 @@ export default function PlayPage() {
                   Format: Answer clearly with "A) ..." and "B) ..."
                 </div>
               )}
-              <AnswerPanel
-                key={`${role.id}-${session.phaseIndex}`}
-                phase={role.phases[session.phaseIndex]}
-                onScore={(score) => {
-                  let damage = Math.max(0, score);
-                  // Special-case: Mysterious mega-hit if keywords matched
-                  if (role.id === 'mysterious' && damage >= 100000000) {
-                    damage = 100000000;
-                  } else if (role.id !== 'mysterious') {
-                    damage = Math.min(100, damage);
-                  }
-                  let newHp = Math.max(0, session.monsterHP - damage);
-                  // Mysterious heal: if damaged but not mega-kill, revert to full
-                  if (role.id === 'mysterious' && damage > 0 && damage < 100000000) {
-                    newHp = 100;
-                  }
-                  if (newHp <= 0) {
-                    const nextPhase = session.phaseIndex + 1;
-                    if (nextPhase >= phasesPerRun) {
-                      markRoleWin(role.id);
-                      push('success', 'Victory!');
-                      // Stop the combat loop and show success modal with Continue
-                      if (rafRef.current) {
-                        cancelAnimationFrame(rafRef.current);
-                        rafRef.current = null;
+              {currentPhase && (
+                <AnswerPanel
+                  key={`${role.id}-${session.phaseIndex}`}
+                  phase={currentPhase}
+                  onScore={(score) => {
+                    // Mysterious custom logic
+                    if (role.id === 'mysterious') {
+                      if (score >= 100000000) {
+                        // Mega-hit victory path
+                        const nextPhase = session.phaseIndex + 1;
+                        if (nextPhase >= phasesPerRun) {
+                          markRoleWin(role.id);
+                          push('success', 'Victory!');
+                          if (rafRef.current) {
+                            cancelAnimationFrame(rafRef.current);
+                            rafRef.current = null;
+                          }
+                          useSession.setState({ running: false });
+                          setShowVictoryModal(true);
+                        } else {
+                          const nextMonsterHP = 100;
+                          useSession.setState({
+                            phaseIndex: nextPhase,
+                            monsterHP: nextMonsterHP,
+                            maxMonsterHP: nextMonsterHP,
+                          });
+                          push('success', 'Phase cleared!');
+                          setShowPhaseClearModal(true);
+                          try {
+                            localStorage.setItem(
+                              `ph-progress-${role.id}`,
+                              JSON.stringify({
+                                phaseIndex: nextPhase,
+                                monsterHP: nextMonsterHP,
+                                maxMonsterHP: nextMonsterHP,
+                                playerHP: session.playerHP,
+                              })
+                            );
+                          } catch {}
+                        }
+                      } else {
+                        // Wrong or partial: -1 HP, reset to full if reaches 0
+                        const decreased = Math.max(0, session.monsterHP - 1);
+                        if (decreased <= 0) {
+                          const resetHp = session.maxMonsterHP || 100;
+                          useSession.setState({ monsterHP: resetHp, maxMonsterHP: resetHp });
+                          try {
+                            localStorage.setItem(
+                              `ph-progress-${role.id}`,
+                              JSON.stringify({
+                                phaseIndex: session.phaseIndex,
+                                monsterHP: resetHp,
+                                maxMonsterHP: resetHp,
+                                playerHP: session.playerHP,
+                              })
+                            );
+                          } catch {}
+                        } else {
+                          useSession.setState({ monsterHP: decreased });
+                          try {
+                            localStorage.setItem(
+                              `ph-progress-${role.id}`,
+                              JSON.stringify({
+                                phaseIndex: session.phaseIndex,
+                                monsterHP: decreased,
+                                maxMonsterHP: session.maxMonsterHP,
+                                playerHP: session.playerHP,
+                              })
+                            );
+                          } catch {}
+                        }
                       }
-                      useSession.setState({ running: false });
-                      setShowVictoryModal(true);
+                      return;
+                    }
+
+                    // Default logic for non-mysterious
+                    let damage = Math.max(0, score);
+                    damage = Math.min(100, damage);
+                    const newHp = Math.max(0, session.monsterHP - damage);
+                    if (newHp <= 0) {
+                      const nextPhase = session.phaseIndex + 1;
+                      if (nextPhase >= phasesPerRun) {
+                        markRoleWin(role.id);
+                        push('success', 'Victory!');
+                        if (rafRef.current) {
+                          cancelAnimationFrame(rafRef.current);
+                          rafRef.current = null;
+                        }
+                        useSession.setState({ running: false });
+                        setShowVictoryModal(true);
+                      } else {
+                        const nextMonsterHP = 100;
+                        useSession.setState({
+                          phaseIndex: nextPhase,
+                          monsterHP: nextMonsterHP,
+                          maxMonsterHP: nextMonsterHP,
+                        });
+                        push('success', 'Phase cleared!');
+                        setShowPhaseClearModal(true);
+                        try {
+                          localStorage.setItem(
+                            `ph-progress-${role.id}`,
+                            JSON.stringify({
+                              phaseIndex: nextPhase,
+                              monsterHP: nextMonsterHP,
+                              maxMonsterHP: nextMonsterHP,
+                              playerHP: session.playerHP,
+                            })
+                          );
+                        } catch {}
+                      }
                     } else {
-                      const nextMonsterHP = 100;
-                      useSession.setState({
-                        phaseIndex: nextPhase,
-                        monsterHP: nextMonsterHP,
-                        maxMonsterHP: nextMonsterHP,
-                      });
-                      push('success', 'Phase cleared!');
-                      setShowPhaseClearModal(true);
-                      // Persist progress
+                      useSession.setState({ monsterHP: newHp });
                       try {
                         localStorage.setItem(
                           `ph-progress-${role.id}`,
                           JSON.stringify({
-                            phaseIndex: nextPhase,
-                            monsterHP: nextMonsterHP,
-                            maxMonsterHP: nextMonsterHP,
+                            phaseIndex: session.phaseIndex,
+                            monsterHP: newHp,
+                            maxMonsterHP: session.maxMonsterHP,
                             playerHP: session.playerHP,
                           })
                         );
                       } catch {}
                     }
-                  } else {
-                    useSession.setState({ monsterHP: newHp });
-                    // Update monster HP persistently mid-phase
-                    try {
-                      localStorage.setItem(
-                        `ph-progress-${role.id}`,
-                        JSON.stringify({
-                          phaseIndex: session.phaseIndex,
-                          monsterHP: newHp,
-                          maxMonsterHP: session.maxMonsterHP,
-                          playerHP: session.playerHP,
-                        })
-                      );
-                    } catch {}
-                  }
-                }}
-              />
+                  }}
+                />
+              )}
             </div>
           </div>
 
           {/* Chat Panel */}
-          <div className="bg-white/5 backdrop-blur rounded-xl p-6 border border-white/10 h-fit">
-            <ChatPanel role={role} phase={role.phases[session.phaseIndex]} />
-          </div>
+          {currentPhase && (
+            <div className="bg-white/5 backdrop-blur rounded-xl p-6 border border-white/10 h-fit">
+              <ChatPanel role={role} phase={currentPhase} />
+            </div>
+          )}
         </div>
       </div>
 

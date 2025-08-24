@@ -25,17 +25,25 @@ export default function ChatPanel({ role, phase }: Props) {
   };
 
   const onSend = async () => {
-    if (!apiKey || loading) return;
     if (role.id === 'mysterious') {
       setResp('????????????????????');
       return;
     }
+    if (!apiKey || loading) return;
     setLoading(true);
     try {
-      const ctx = buildContext(role, phase, language) + '\n\n' + prompt;
+      const ctx = buildContext(role, phase, language) + '\n\nUser question (hints only, no solutions):\n' + prompt;
       const res = await callGemini(apiKey, ctx);
       // Mask responses for Mysterious
-      setResp(res.text);
+      // Sanitize model response to avoid code blocks or direct solutions
+      let text = (res.text || '').trim();
+      // Remove fenced code blocks
+      text = text.replace(/```[\s\S]*?```/g, '[redacted code]');
+      // Basic guard: if it looks like direct code lines, replace them
+      if (/\bfunction\b|=>|const\s+|let\s+|var\s+|class\s+/.test(text)) {
+        text = 'I can\'t provide direct code. Here\'s a hint: ' + text.replace(/\n+/g, ' ').slice(0, 280);
+      }
+      setResp(text);
       // usage tracking removed from UI
     } catch (err) {
       if (err instanceof GeminiError) {
@@ -87,7 +95,7 @@ export default function ChatPanel({ role, phase }: Props) {
         className="w-full px-2 py-2 bg-black/40 rounded border border-white/10"
         placeholder={t('askForHelp')}
       />
-      <button onClick={onSend} disabled={!apiKey || loading} className="px-3 py-2 rounded bg-purple-600 disabled:opacity-50">
+      <button onClick={onSend} disabled={loading || (!apiKey && role.id !== 'mysterious')} className="px-3 py-2 rounded bg-purple-600 disabled:opacity-50">
         {loading ? t('sending') : t('send')}
       </button>
       {resp && (
