@@ -6,6 +6,7 @@ import { useSession } from '../store/session';
 import { useProgress } from '../store/progress';
 import { ROUTES } from '../lib/routes';
 import { useToast } from '../components/Toast';
+import { useTranslation } from '../hooks/useTranslation';
 import TaskPanel from '../components/TaskPanel';
 import AnswerPanel from '../components/AnswerPanel';
 import ChatPanel from '../components/ChatPanel';
@@ -21,7 +22,7 @@ function getCharacterStats(roleId: string) {
     case 'necromancer':
       return { health: 100, attack: 50, specialty: 'Dark Arts & Algorithms' };
     case 'alchemist':
-      return { health: 100, attack: 10, specialty: 'Data Transformation' };
+      return { health: 100, attack: 20, specialty: 'Data Transformation' };
     case 'hacker':
       return { health: 50, attack: 100, specialty: 'Security & Systems' };
     case 'mysterious':
@@ -49,6 +50,7 @@ export default function PlayPage() {
   const settings = useSettings();
   const session = useSession();
   const { markRoleWin } = useProgress();
+  const { t, language } = useTranslation();
   const role = useMemo(() => pack?.roles.find((r) => r.id === roleId) || null, [pack, roleId]);
   const phasesPerRun = role?.phases.length ?? defaultPhasesPerRun;
   const characterStats = useMemo(() => (role ? getCharacterStats(role.id) : null), [role?.id]);
@@ -163,7 +165,7 @@ export default function PlayPage() {
       <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin text-6xl mb-4">⏳</div>
-          <p className="text-slate-400 text-lg">Loading battle...</p>
+          <p className="text-slate-400 text-lg">{t('loadingBattle')}</p>
         </div>
       </div>
     );
@@ -182,16 +184,16 @@ export default function PlayPage() {
             <button
               onClick={() => nav(ROUTES.ROOT)}
               className="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm text-white"
-            >Back to Menu</button>
+            >{t('backToMenu')}</button>
             <h1 className="text-2xl md:text-3xl font-bold text-white text-center flex-1">
-              {role.name} - Stage {phaseNumber}
+              {role.name} - {language === 'zh-hk' ? `${t('stageLabel')}${phaseNumber}${t('stageWithNumber')}` : `${t('stageLabel')} ${phaseNumber}`}
             </h1>
             <div className="w-[110px]" />
           </div>
           <div className="flex justify-center items-center gap-4 text-sm mt-2">
-            <span className="text-slate-400">Phase {session.phaseIndex + 1} of {phasesPerRun}</span>
+            <span className="text-slate-400">{session.phaseIndex + 1}/{phasesPerRun}</span>
             <div className={`px-3 py-1 rounded-full ${timeLeft <= 2 ? 'bg-red-500/20 text-red-300' : 'bg-orange-500/20 text-orange-300'}`}>
-              Next attack: {timeLeft}s
+              {t('nextAttack')}: {timeLeft}s
             </div>
           </div>
         </div>
@@ -220,7 +222,7 @@ export default function PlayPage() {
               {/* Player HP Bar */}
               <div className="mb-2">
                 <div className="flex justify-between text-xs text-green-300 mb-1">
-                  <span>Health</span>
+                  <span>{t('health')}</span>
                   <span>{session.playerHP}/{characterStats.health}</span>
                 </div>
                 <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
@@ -231,13 +233,13 @@ export default function PlayPage() {
                 </div>
               </div>
               
-              <div className="text-xs text-slate-400">ATK: {characterStats.attack}</div>
+              <div className="text-xs text-slate-400">{t('atk')}: {characterStats.attack}</div>
             </div>
 
             {/* VS Indicator (Center) */}
             <div className="text-center lg:block hidden">
               <div className="text-4xl font-bold text-slate-500 mb-2">⚔️</div>
-              <div className="text-slate-400 text-sm">BATTLE</div>
+              <div className="text-slate-400 text-sm">{t('battle')}</div>
             </div>
 
             {/* Monster (Right) */}
@@ -255,12 +257,12 @@ export default function PlayPage() {
                 )}
               </div>
               
-              <h3 className="text-lg font-bold text-white mb-2">Monster {phaseNumber}</h3>
+              <h3 className="text-lg font-bold text-white mb-2">{t('monster')} {phaseNumber}</h3>
               
               {/* Monster HP Bar */}
               <div className="mb-2">
                 <div className="flex justify-between text-xs text-red-300 mb-1">
-                  <span>Health</span>
+                  <span>{t('health')}</span>
                   <span>{session.monsterHP}/{session.maxMonsterHP}</span>
                 </div>
                 <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
@@ -271,7 +273,7 @@ export default function PlayPage() {
                 </div>
               </div>
               
-              <div className="text-xs text-slate-400">DMG: {settings.monsterDamagePerTick}/tick</div>
+              <div className="text-xs text-slate-400">{t('dmg')}: {settings.monsterDamagePerTick}{t('tick')}</div>
             </div>
           </div>
         </div>

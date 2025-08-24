@@ -2,6 +2,7 @@ import { useContent } from '../store/content';
 import { useProgress } from '../store/progress';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../lib/routes';
+import { useTranslation } from '../hooks/useTranslation';
 
 function getCharacterStats(roleId: string) {
   const baseStats = { health: 80, attack: 25 };
@@ -14,7 +15,7 @@ function getCharacterStats(roleId: string) {
     case 'necromancer':
       return { health: 100, attack: 50, specialty: 'Dark Arts & Algorithms' };
     case 'alchemist':
-      return { health: 100, attack: 10, specialty: 'Data Transformation' };
+      return { health: 100, attack: 20, specialty: 'Data Transformation' };
     case 'hacker':
       return { health: 50, attack: 100, specialty: 'Security & Systems' };
     case 'mysterious':
@@ -25,32 +26,32 @@ function getCharacterStats(roleId: string) {
 }
 
 function getGameTypes(phases: any[]) {
-  const types = new Set();
-  phases.forEach(phase => {
+  const typeKeys = new Set<string>();
+  phases.forEach((phase) => {
     switch (phase.task_type) {
       case 'bugfix':
-        types.add('🐛 Debug Code');
+        typeKeys.add('typeDebugCode');
         break;
       case 'optimization':
-        types.add('⚡ Optimize Performance');
+        typeKeys.add('typeOptimizePerformance');
         break;
       case 'creative':
-        types.add('🎨 Creative Tasks');
+        typeKeys.add('typeCreativeTasks');
         break;
       case 'logic':
-        types.add('🧠 Logic Puzzles');
+        typeKeys.add('typeLogicPuzzles');
         break;
       case 'security':
-        types.add('🔒 Security Challenges');
+        typeKeys.add('typeSecurityChallenges');
         break;
       case 'data':
-        types.add('📊 Data Processing');
+        typeKeys.add('typeDataProcessing');
         break;
       default:
-        types.add('⚔️ Combat Challenge');
+        typeKeys.add('typeCombatChallenge');
     }
   });
-  return Array.from(types);
+  return Array.from(typeKeys);
 }
 
 function pickSprite(id: string): string {
@@ -74,13 +75,14 @@ function getDifficultyColor(difficulty: string) {
 export default function PackViewer() {
   const { pack } = useContent();
   const { completedRoles } = useProgress();
+  const { t } = useTranslation();
   
   if (!pack) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin text-6xl mb-4">⏳</div>
-          <p className="text-slate-400 text-lg">Loading character data...</p>
+          <p className="text-slate-400 text-lg">{t('loadingCharacters')}</p>
         </div>
       </div>
     );
@@ -92,16 +94,16 @@ export default function PackViewer() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-2">
-            📖 Character Codex
+            📖 {t('characterCodex')}
           </h1>
           <p className="text-slate-400 text-sm mb-4">
-            Study your opponents and choose your battles wisely
+            {t('studyOpponents')}
           </p>
           <Link 
             to={ROUTES.ROOT} 
             className="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium transition-colors"
           >
-            ← Back to Menu
+            ← {t('backToMenu')}
           </Link>
         </div>
 
@@ -111,15 +113,15 @@ export default function PackViewer() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
             <div className="p-4 bg-blue-500/20 rounded-lg border border-blue-500/30">
               <div className="text-2xl font-bold text-white">{pack.roles.length}</div>
-              <div className="text-sm text-blue-300">Characters Available</div>
+              <div className="text-sm text-blue-300">{t('charactersAvailable')}</div>
             </div>
             <div className="p-4 bg-purple-500/20 rounded-lg border border-purple-500/30">
               <div className="text-2xl font-bold text-white">{pack.meta.phases_per_run}</div>
-              <div className="text-sm text-purple-300">Phases per Battle</div>
+              <div className="text-sm text-purple-300">{t('phasesPerBattle')}</div>
             </div>
             <div className="p-4 bg-green-500/20 rounded-lg border border-green-500/30">
               <div className="text-2xl font-bold text-white">{completedRoles.length}</div>
-              <div className="text-sm text-green-300">Completed Characters</div>
+              <div className="text-sm text-green-300">{t('completedCharacters')}</div>
             </div>
           </div>
         </div>
@@ -169,7 +171,7 @@ export default function PackViewer() {
                     </p>
                     
                     <div className="text-xs text-slate-400">
-                      Specialty: <span className="text-slate-300 font-medium">{stats.specialty}</span>
+                      {t('specialty')}: <span className="text-slate-300 font-medium">{stats.specialty}</span>
                     </div>
                   </div>
                 </div>
@@ -178,24 +180,24 @@ export default function PackViewer() {
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="text-center p-3 bg-green-500/20 rounded-lg border border-green-500/30">
                     <div className="text-lg font-bold text-white">{stats.health}</div>
-                    <div className="text-xs text-green-300">Health Points</div>
+                    <div className="text-xs text-green-300">{t('healthPoints')}</div>
                   </div>
                   <div className="text-center p-3 bg-blue-500/20 rounded-lg border border-blue-500/30">
                     <div className="text-lg font-bold text-white">{stats.attack}</div>
-                    <div className="text-xs text-blue-300">Attack Power</div>
+                    <div className="text-xs text-blue-300">{t('attackPower')}</div>
                   </div>
                 </div>
 
                 {/* Challenge Types */}
                 <div className="mb-6">
-                  <h4 className="text-sm font-semibold text-white mb-3">🎯 Challenge Types</h4>
+                  <h4 className="text-sm font-semibold text-white mb-3">🎯 {t('challengeTypes')}</h4>
                   <div className="flex flex-wrap gap-2">
-                    {gameTypes.map((type, index) => (
+                    {gameTypes.map((typeKey, index) => (
                       <span 
                         key={index} 
                         className="px-2 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-md text-xs font-medium"
                       >
-                        {String(type)}
+                        {t(typeKey as any)}
                       </span>
                     ))}
                   </div>
@@ -211,7 +213,7 @@ export default function PackViewer() {
                         : 'bg-blue-600 hover:bg-blue-700 text-white'
                     }`}
                   >
-                    {isCompleted ? '🏆 Challenge Again' : '⚔️ Enter Battle'}
+                    {isCompleted ? t('challengeAgain') : t('enterBattle')}
                   </Link>
                 </div>
               </div>
@@ -223,8 +225,8 @@ export default function PackViewer() {
         {pack.roles.every((r) => completedRoles.includes(r.id)) && (
           <div className="mt-8 text-center p-8 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl border border-yellow-500/30">
             <div className="text-6xl mb-4">👑</div>
-            <div className="text-3xl font-bold text-white mb-2">Master of All Characters!</div>
-            <div className="text-yellow-300 text-lg">You've conquered every challenge in this realm.</div>
+            <div className="text-3xl font-bold text-white mb-2">{t('masterAllCharactersTitle')}</div>
+            <div className="text-yellow-300 text-lg">{t('masterAllCharactersSubtitle')}</div>
           </div>
         )}
       </div>

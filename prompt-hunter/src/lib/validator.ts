@@ -53,9 +53,14 @@ export async function validateAnswer(
       return { ok: !!result.ok, message: result.ok ? 'Passed' : result.error || 'Failed' };
     }
     case 'ai_score': {
-      const score = await scoreWithAI(v.scheme, v.guidance, text, phase, v.bug_catalog);
-      const ok = score > 0;
-      return { ok, message: String(score), score };
+      const result = await scoreWithAI(v.scheme, v.guidance, text, phase, v.bug_catalog);
+      if (typeof result === 'object') {
+        // Error case
+        return { ok: false, message: result.error };
+      }
+      // Success case - result is a number
+      const ok = result > 0;
+      return { ok, message: String(result), score: result };
     }
     case 'mysterious': {
       const lower = text.toLowerCase();
@@ -85,29 +90,35 @@ function runInWorker(code: string, input: string): Promise<{ ok: boolean; error?
 }
 
 async function scoreWithAI(
-  scheme: 'attack_100_once' | 'attack_50_two_parts' | 'attack_10_bugs',
+  scheme: 'attack_100_once' | 'attack_50_two_parts' | 'attack_20_bugs',
   guidance: string,
   userText: string,
   phase: Phase,
   bugCatalog?: { name: string; pattern: string; negate?: boolean; points?: number }[]
-): Promise<number> {
+): Promise<number | { error: string }> {
   const apiKey = sessionStorage.getItem('gemini_api_key') || '';
-  if (!apiKey) return 0;
+  if (!apiKey) return { error: 'API key required for validation' };
   const { callGemini } = await import('./gemini');
   const { buildContext } = await import('./contextBuilder');
   const base = buildContext({ name: 'Player', difficulty: 'easy', id: 'player', phases: [] } as any, phase);
+  
+  // For Hacker phases, include hidden content for AI validation
+  let hiddenContent = '';
+  if (phase.hidden_html) hiddenContent += `\nHidden HTML: ${phase.hidden_html}`;
+  if (phase.hidden_data) hiddenContent += `\nHidden Data: ${phase.hidden_data}`;
+  if (phase.hidden_js) hiddenContent += `\nHidden JS: ${phase.hidden_js}`;
   const schemeLine = `Scheme: ${scheme}`;
   const rules = [
     'Never reveal answers or full solutions; give hints only if asked later.',
     'Output ONLY a single integer with no explanation.',
     "For 'attack_100_once': return 100 if the answer correctly solves the exact task; else 0.",
     "For 'attack_50_two_parts': return 100 only if TWO required sub-answers are both correct; else 0.",
-    "For 'attack_10_bugs': count distinct valid bug patterns introduced and return count*10 (0..100).",
+    "For 'attack_20_bugs': count distinct valid bug patterns introduced and return count*10 (0..100).",
   ].join('\n- ');
   const bugList = bugCatalog && bugCatalog.length
     ? `\nBug catalog (patterns):\n${bugCatalog.map((b) => `- ${b.name}: pattern='${b.pattern}'${b.negate ? ' (negate)' : ''}`).join('\n')}`
     : '';
-  const prompt = `${base}
+  const prompt = `${base}${hiddenContent}
 \n${schemeLine}
 Validator Guidance:
 ${guidance}
@@ -122,10 +133,16 @@ ${userText}`;
     const text = (res.text || '').trim();
     const match = text.match(/(-?\d+)/);
     const n = match ? Number(match[1]) : 0;
-    if (Number.isNaN(n)) return 0;
+    if (Number.isNaN(n)) return { error: 'Invalid AI response' };
     return Math.max(0, Math.min(100, n));
-  } catch {
-    return 0;
+  } catch (error: any) {
+    if (error?.message?.includes('Invalid API key')) {
+      return { error: 'Invalid API key format' };
+    }
+    if (error?.message?.includes('API key')) {
+      return { error: 'API key required for validation' };
+    }
+    return { error: 'Validation failed' };
   }
 }
 

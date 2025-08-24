@@ -11,7 +11,7 @@ export type Validator =
   | { type: 'manual_review'; note?: string }
   | { type: 'js_eval'; code: string }
   // AI numeric score validator; returns only a number string (e.g., '100' or '0')
-  | { type: 'ai_score'; scheme: 'attack_100_once' | 'attack_50_two_parts' | 'attack_10_bugs'; guidance: string; bug_catalog?: { name: string; pattern: string; negate?: boolean; points?: number }[] };
+  | { type: 'ai_score'; scheme: 'attack_100_once' | 'attack_50_two_parts' | 'attack_20_bugs'; guidance: string; bug_catalog?: { name: string; pattern: string; negate?: boolean; points?: number }[] };
 
 // Special-case validator for the Mysterious role
 export type MysteriousValidator = { type: 'mysterious'; keywords: string[]; prompt_mask?: string; hint?: string };

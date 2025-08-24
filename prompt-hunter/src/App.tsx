@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useContent } from './store/content';
+import { useSettings } from './store/settings';
 import { ROUTES } from './lib/routes';
 import { ToastProvider } from './components/Toast';
 import ApiKeyGate from './components/ApiKeyGate';
@@ -9,10 +10,17 @@ import PlayPage from './pages/PlayPage';
 import PackViewer from './pages/PackViewer';
 
 export default function App() {
-  const loadDefault = useContent((s) => s.loadDefault);
+  const { loadDefault, loadLanguage } = useContent();
+  const language = useSettings((s) => s.language);
+  
   useEffect(() => {
-    loadDefault();
-  }, [loadDefault]);
+    // Load content based on current language setting
+    if (language === 'en') {
+      loadDefault();
+    } else {
+      loadLanguage(language);
+    }
+  }, [loadDefault, loadLanguage, language]);
   return (
     <ToastProvider>
       <ApiKeyGate>

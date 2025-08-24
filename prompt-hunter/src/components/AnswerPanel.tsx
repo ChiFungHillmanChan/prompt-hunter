@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Phase } from '../types/content';
 import { validateAnswer } from '../lib/validator';
+import { useTranslation } from '../hooks/useTranslation';
 
 type Props = {
   phase: Phase;
@@ -8,6 +9,7 @@ type Props = {
 };
 
 export default function AnswerPanel({ phase, onScore }: Props) {
+  const { t } = useTranslation();
   const [text, setText] = React.useState('');
   const [songTitle, setSongTitle] = React.useState('');
   const [songArtist, setSongArtist] = React.useState('');
@@ -20,7 +22,13 @@ export default function AnswerPanel({ phase, onScore }: Props) {
     setLoading(true);
     try {
       const res = await validateAnswer(phase, text, { songTitle, songArtist });
-      setMsg(res.message);
+      // Translate known error messages
+      let displayMessage = res.message;
+      if (res.message === 'API key required for validation') displayMessage = t('noApiKey');
+      else if (res.message === 'Invalid API key format') displayMessage = t('invalidApiKey');
+      else if (res.message === 'Validation failed') displayMessage = t('validationError');
+      
+      setMsg(displayMessage);
       const score = typeof res.score === 'number' ? res.score : (res.ok ? 100 : 0);
       if (score > 0) onScore(score);
     } finally {
@@ -30,17 +38,17 @@ export default function AnswerPanel({ phase, onScore }: Props) {
 
   return (
     <div className="p-3 bg-white/5 border border-white/10 rounded text-sm space-y-2">
-      <div className="font-semibold">Your Answer</div>
+      <div className="font-semibold">{t('yourAnswer')}</div>
       {isBard ? (
         <div className="grid grid-cols-1 gap-2">
           <input
-            placeholder="Song Title"
+            placeholder={t('songTitle')}
             value={songTitle}
             onChange={(e) => setSongTitle(e.target.value)}
             className="px-2 py-2 bg-black/40 rounded border border-white/10"
           />
           <input
-            placeholder="Artist"
+            placeholder={t('artist')}
             value={songArtist}
             onChange={(e) => setSongArtist(e.target.value)}
             className="px-2 py-2 bg-black/40 rounded border border-white/10"
@@ -52,7 +60,7 @@ export default function AnswerPanel({ phase, onScore }: Props) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           className="w-full px-2 py-2 bg-black/40 rounded border border-white/10"
-          placeholder="Type your answer here"
+          placeholder={t('typeAnswer')}
         />
       )}
       <button
@@ -60,7 +68,7 @@ export default function AnswerPanel({ phase, onScore }: Props) {
         disabled={loading}
         className="px-3 py-2 rounded bg-blue-600 disabled:opacity-50"
       >
-        {loading ? 'Validating…' : 'Validate'}
+        {loading ? t('validating') : t('validate')}
       </button>
       {msg && <div className="text-xs opacity-80">{msg}</div>}
     </div>

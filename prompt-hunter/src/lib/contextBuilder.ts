@@ -1,6 +1,7 @@
 import type { Phase, Role } from '../types/content';
+import type { Language } from './translations';
 
-export function buildContext(role: Role, phase: Phase): string {
+export function buildContext(role: Role, phase: Phase, language: Language = 'en'): string {
   const lines: string[] = [];
   lines.push(`Role: ${role.name} (difficulty: ${role.difficulty})`);
   lines.push(`Phase ${phase.phase} — task: ${phase.task_type}`);
@@ -21,6 +22,13 @@ export function buildContext(role: Role, phase: Phase): string {
   if (phase.hidden_data) {
     lines.push('\nHidden data available');
   }
+  
+  // Add language instruction for Gemini
+  if (language === 'zh-hk') {
+    lines.push('\n---');
+    lines.push('IMPORTANT: Please respond in Traditional Chinese (Cantonese style). The user may ask questions in Chinese or English, but always respond in Traditional Chinese using Cantonese expressions and vocabulary.');
+  }
+  
   return lines.join('\n');
 }
 

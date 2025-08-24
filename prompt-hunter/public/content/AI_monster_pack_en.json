@@ -140,7 +140,7 @@
           "perfect_code": "function showSafe(text){ const el=document.getElementById('out'); el.textContent=text; }",
           "validator": {
             "type": "ai_score",
-            "scheme": "attack_10_bugs",
+            "scheme": "attack_20_bugs",
             "guidance": "Count distinct unsafe changes. Score=count*10 capped at 100. Return only the number.",
             "bug_catalog": [
               { "name": "innerHTML_injection", "pattern": "innerHTML" },
@@ -154,28 +154,28 @@
           "task_type": "poison-code",
           "prompt": "Your goal:\n- Start with a secure password compare, then poison it with timing leaks or weak equality.\nConstraints:\n- Each distinct flaw counts once.\nFormat:\n- Provide code or list changes.",
           "perfect_code": "function eq(a,b){ /* constant-time compare; do not leak */ }",
-          "validator": { "type": "ai_score", "scheme": "attack_10_bugs", "guidance": "Count timing or compare flaws introduced. Score=count*10 capped at 100. Return only the number.", "bug_catalog": [ { "name": "early_return", "pattern": "return false" }, { "name": "loose_compare", "pattern": "==" } ] }
+          "validator": { "type": "ai_score", "scheme": "attack_20_bugs", "guidance": "Count timing or compare flaws introduced. Score=count*10 capped at 100. Return only the number.", "bug_catalog": [ { "name": "early_return", "pattern": "return false" }, { "name": "loose_compare", "pattern": "==" } ] }
         },
         {
           "phase": 3,
           "task_type": "poison-code",
           "prompt": "Your goal:\n- Start with a parameterized SQL query and poison it by making it unsafe.\nConstraints:\n- Show string concatenation or template injection.\nFormat:\n- Provide code or list changes.",
           "perfect_code": "function queryUser(db,name){ return db.query('SELECT * FROM users WHERE name=?',[name]); }",
-          "validator": { "type": "ai_score", "scheme": "attack_10_bugs", "guidance": "Count query concatenations. Score=count*10 capped at 100. Return only the number.", "bug_catalog": [ { "name": "plus_concat", "pattern": "+ name" }, { "name": "template_concat", "pattern": "${name}" } ] }
+          "validator": { "type": "ai_score", "scheme": "attack_20_bugs", "guidance": "Count query concatenations. Score=count*10 capped at 100. Return only the number.", "bug_catalog": [ { "name": "plus_concat", "pattern": "+ name" }, { "name": "template_concat", "pattern": "${name}" } ] }
         },
         {
           "phase": 4,
           "task_type": "poison-code",
           "prompt": "Your goal:\n- Start with strict email validation and poison it by making it too permissive.\nConstraints:\n- Distinct permissive changes count.\nFormat:\n- Provide code or list changes.",
           "perfect_code": "const isEmail=s=>/^[\\w.-]+@[\\w.-]+\\.[A-Za-z]{2,}$/.test(s);",
-          "validator": { "type": "ai_score", "scheme": "attack_10_bugs", "guidance": "Count changes that allow bad inputs. Score=count*10 capped at 100. Return only the number.", "bug_catalog": [ { "name": "over_permissive", "pattern": "/.*/" }, { "name": "always_true", "pattern": "return true" } ] }
+          "validator": { "type": "ai_score", "scheme": "attack_20_bugs", "guidance": "Count changes that allow bad inputs. Score=count*10 capped at 100. Return only the number.", "bug_catalog": [ { "name": "over_permissive", "pattern": "/.*/" }, { "name": "always_true", "pattern": "return true" } ] }
         },
         {
           "phase": 5,
           "task_type": "poison-code",
           "prompt": "Your goal:\n- Corrupt the 'Hello, World!' program in unique ways to break or alter it.\nConstraints:\n- Distinct corruptions count; avoid duplicates.\nFormat:\n- Provide code or bullet list.",
           "perfect_code": "console.log('Hello, World!');",
-          "validator": { "type": "ai_score", "scheme": "attack_10_bugs", "guidance": "Count distinct corruptions of the program. Score=count*10 capped at 100. Return only the number." }
+          "validator": { "type": "ai_score", "scheme": "attack_20_bugs", "guidance": "Count distinct corruptions of the program. Score=count*10 capped at 100. Return only the number." }
         }
       ]
     },

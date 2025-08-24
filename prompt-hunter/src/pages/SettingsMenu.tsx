@@ -4,6 +4,7 @@ import { useSettings } from '../store/settings';
 import { useContent } from '../store/content';
 import { useProgress } from '../store/progress';
 import { maskKey } from '../lib/gemini';
+import { useTranslation } from '../hooks/useTranslation';
 import React from 'react';
 
 function getCharacterStats(roleId: string) {
@@ -17,7 +18,7 @@ function getCharacterStats(roleId: string) {
     case 'necromancer':
       return { health: 100, attack: 50, specialty: 'Dark Arts & Algorithms' };
     case 'alchemist':
-      return { health: 100, attack: 10, specialty: 'Data Transformation' };
+      return { health: 100, attack: 20, specialty: 'Data Transformation' };
     case 'hacker':
       return { health: 50, attack: 100, specialty: 'Security & Systems' };
     case 'mysterious':
@@ -32,6 +33,7 @@ export default function SettingsMenu() {
   const settings = useSettings();
   const { pack } = useContent();
   const { completedRoles } = useProgress();
+  const { t } = useTranslation();
   const [apiKey, setApiKey] = React.useState<string>(() => sessionStorage.getItem('gemini_api_key') || '');
   const [newApiKey, setNewApiKey] = React.useState('');
   const [showKeyInput, setShowKeyInput] = React.useState(false);
@@ -91,10 +93,10 @@ export default function SettingsMenu() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-2">
-            ⚔️ Prompt Hunter
+            {t('appTitle')}
           </h1>
           <p className="text-slate-400 text-sm">
-            Master AI prompts to defeat monsters and unlock new characters
+            {t('tagline')}
           </p>
         </div>
 
@@ -104,30 +106,34 @@ export default function SettingsMenu() {
           {/* Game Settings Card */}
           <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
             <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              ⚙️ Game Settings
+              {t('gameSettings')}
             </h2>
             
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <label className="text-sm text-slate-300 flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={settings.reducedMotion}
-                    onChange={(e) => settings.set('reducedMotion', e.target.checked)}
-                    className="rounded border-slate-600 bg-slate-700 text-purple-600 focus:ring-purple-500 focus:ring-offset-slate-800"
-                  />
-                  <span>Reduced motion animations</span>
-                </label>
+                <label className="text-sm text-slate-300">{t('language')}</label>
+                <select
+                  value={settings.language}
+                  onChange={(e) => {
+                    const newLanguage = e.target.value as 'en' | 'zh-hk';
+                    settings.set('language', newLanguage);
+                    useContent.getState().loadLanguage(newLanguage);
+                  }}
+                  className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm focus:ring-purple-500 focus:border-purple-500"
+                >
+                  <option value="en">English</option>
+                  <option value="zh-hk">繁體中文 (廣東話)</option>
+                </select>
               </div>
               
               <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="text-center p-3 bg-green-500/20 rounded-lg border border-green-500/30">
-                  <div className="text-sm text-green-300 mb-1">Player Health</div>
+                <div className="text-center p-3 bg-red-500/20 rounded-lg border border-red-500/30">
+                  <div className="text-sm text-red-300 mb-1">{t('monsterHealth')}</div>
                   <div className="text-xl font-bold text-white">{settings.playerMaxHP}</div>
                 </div>
-                <div className="text-center p-3 bg-blue-500/20 rounded-lg border border-blue-500/30">
-                  <div className="text-sm text-blue-300 mb-1">Attack Power</div>
-                  <div className="text-xl font-bold text-white">{settings.playerAnswerDamage}</div>
+                <div className="text-center p-3 bg-orange-500/20 rounded-lg border border-orange-500/30">
+                  <div className="text-sm text-orange-300 mb-1">{t('attackPerSecond')}</div>
+                  <div className="text-xl font-bold text-white">{settings.monsterDamagePerTick}</div>
                 </div>
               </div>
             </div>
@@ -136,14 +142,14 @@ export default function SettingsMenu() {
           {/* AI Assistant Card */}
           <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
             <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              🤖 AI Assistant
+              {t('aiAssistant')}
             </h2>
             
             {apiKey && !showKeyInput ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-3 bg-green-500/20 rounded-lg border border-green-500/30">
                   <div>
-                    <div className="text-sm text-green-300 mb-1">API Key Connected</div>
+                    <div className="text-sm text-green-300 mb-1">{t('apiKeyConnected')}</div>
                     <div className="text-white font-mono text-sm">{maskKey(apiKey)}</div>
                   </div>
                   <div className="text-green-400 text-2xl">✓</div>
@@ -153,13 +159,13 @@ export default function SettingsMenu() {
                     onClick={() => setShowKeyInput(true)}
                     className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium transition-colors"
                   >
-                    Change Key
+                    {t('changeKey')}
                   </button>
                   <button
                     onClick={onRemoveKey}
                     className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition-colors"
                   >
-                    Remove Key
+                    {t('removeKey')}
                   </button>
                 </div>
               </div>
@@ -167,10 +173,10 @@ export default function SettingsMenu() {
               <div className="space-y-4">
                 <div className="p-3 bg-yellow-500/20 rounded-lg border border-yellow-500/30">
                   <div className="text-sm text-yellow-300 mb-1">
-                    {!apiKey ? 'No AI Assistant Connected' : 'Enter New API Key'}
+                    {!apiKey ? t('noAiConnected') : t('enterNewKey')}
                   </div>
                   <div className="text-slate-300 text-xs">
-                    Connect Gemini AI to get hints and help during battles
+                    {t('connectHint')}
                   </div>
                 </div>
                 
@@ -179,7 +185,7 @@ export default function SettingsMenu() {
                     type="password"
                     value={newApiKey}
                     onChange={(e) => setNewApiKey(e.target.value)}
-                    placeholder="Paste your Gemini API key here..."
+                    placeholder={t('pasteApiKey')}
                     className="w-full px-4 py-3 bg-slate-800/50 rounded-lg border border-slate-600 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-white placeholder-slate-400 text-sm"
                   />
                   <div className="flex flex-col sm:flex-row gap-2">
@@ -188,14 +194,14 @@ export default function SettingsMenu() {
                       disabled={!newApiKey.trim()}
                       className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors"
                     >
-                      Connect AI Assistant
+                      {t('connectAi')}
                     </button>
                     {apiKey && (
                       <button
                         onClick={onCancelKey}
                         className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium transition-colors"
                       >
-                        Cancel
+                        {t('cancel')}
                       </button>
                     )}
                   </div>
@@ -206,10 +212,13 @@ export default function SettingsMenu() {
                       rel="noreferrer"
                       className="text-blue-400 hover:text-blue-300 underline transition-colors"
                     >
-                      Get a free Gemini API Key
+                      {t('getApiKey')}
                     </a>
                     <span className="mx-2">•</span>
-                    <span>Restrict to HTTP referrers for security</span>
+                    <span>{t('securityNote')}</span>
+                  </div>
+                  <div className="text-xs text-yellow-400 text-center mt-2">
+                    {t('vpnWarning')}
                   </div>
                 </div>
               </div>
@@ -219,13 +228,13 @@ export default function SettingsMenu() {
           {/* Characters Card */}
           <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
             <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              👥 Available Characters
+              {t('availableCharacters')}
             </h2>
             
             {!pack ? (
               <div className="text-center py-8">
                 <div className="animate-spin text-3xl mb-2">⏳</div>
-                <p className="text-slate-400">Loading characters...</p>
+                <p className="text-slate-400">{t('loadingCharacters')}</p>
               </div>
             ) : (
               <>
@@ -239,7 +248,7 @@ export default function SettingsMenu() {
                       if (raw) {
                         const saved = JSON.parse(raw || '{}');
                         const idx = typeof saved?.phaseIndex === 'number' ? saved.phaseIndex : 0;
-                        stageLabel = `Stage ${idx + 1}`;
+                        stageLabel = settings.language === 'zh-hk' ? `${t('stageLabel')}${idx + 1}${t('stageWithNumber')}` : `${t('stageLabel')} ${idx + 1}`;
                       }
                     } catch {}
                     return (
@@ -266,7 +275,7 @@ export default function SettingsMenu() {
                         
                         <div className="flex items-center justify-between">
                           <div className="text-xs text-slate-400">
-                            {pack.meta.phases_per_run} challenges
+                            {pack.meta.phases_per_run} {t('challenges')}
                           </div>
                           <div className="flex items-center gap-2">
                             {stageLabel && !won && (
@@ -276,7 +285,7 @@ export default function SettingsMenu() {
                             )}
                             {won && (
                               <span className="px-2 py-1 text-xs bg-green-600 text-white rounded-full font-medium">
-                                ✓ Complete
+                                {t('complete')}
                               </span>
                             )}
                           </div>
@@ -293,8 +302,8 @@ export default function SettingsMenu() {
                 {pack.roles.every((r) => completedRoles.includes(r.id)) && (
                   <div className="text-center p-6 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl border border-yellow-500/30">
                     <div className="text-3xl mb-2">🏆</div>
-                    <div className="text-xl font-bold text-white mb-1">Congratulations!</div>
-                    <div className="text-yellow-300 text-sm">You've mastered all characters!</div>
+                    <div className="text-xl font-bold text-white mb-1">{t('congratulations')}</div>
+                    <div className="text-yellow-300 text-sm">{t('masteredAll')}</div>
                   </div>
                 )}
                 
@@ -303,7 +312,7 @@ export default function SettingsMenu() {
                     to={ROUTES.PACK} 
                     className="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium transition-colors"
                   >
-                    📖 View Character Details
+                    {t('viewCharacterDetails')}
                   </Link>
                 </div>
               </>
@@ -324,24 +333,24 @@ export default function SettingsMenu() {
                 style={{ imageRendering: 'pixelated' }} 
               />
               <h2 className="text-2xl font-bold text-white mb-2">{selectedCharacter.name}</h2>
-              <p className="text-slate-400 text-sm mb-1 capitalize">{selectedCharacter.difficulty} Difficulty</p>
+              <p className="text-slate-400 text-sm mb-1 capitalize">{t(selectedCharacter.difficulty as any)} {t('difficulty')}</p>
               <p className="text-slate-300 text-sm leading-relaxed">{selectedCharacter.description}</p>
             </div>
 
             {/* Combat Stats */}
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-white mb-4 text-center">⚔️ Combat Overview</h3>
+              <h3 className="text-lg font-semibold text-white mb-4 text-center">{t('combatOverview')}</h3>
               
               {(() => {
                 const characterStats = getCharacterStats(selectedCharacter.id);
                 return (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center p-3 bg-green-500/20 rounded-lg border border-green-500/30">
-                      <div className="text-sm text-green-300 mb-1">{selectedCharacter.name} Health</div>
+                      <div className="text-sm text-green-300 mb-1">{selectedCharacter.name} {t('health')}</div>
                       <div className="text-xl font-bold text-white">{characterStats.health} HP</div>
                     </div>
                     <div className="text-center p-3 bg-blue-500/20 rounded-lg border border-blue-500/30">
-                      <div className="text-sm text-blue-300 mb-1">{selectedCharacter.name} Attack</div>
+                      <div className="text-sm text-blue-300 mb-1">{selectedCharacter.name} {t('atk')}</div>
                       <div className="text-xl font-bold text-white">{characterStats.attack} DMG</div>
                     </div>
                   </div>
@@ -353,10 +362,10 @@ export default function SettingsMenu() {
             <div className="mb-6">
               <div className="bg-purple-500/20 rounded-lg p-4 border border-purple-500/30">
                 <div className="text-center">
-                  <div className="text-purple-300 text-sm mb-1">Challenge Phases</div>
-                  <div className="text-white text-lg font-bold">{pack?.meta.phases_per_run || 5} Rounds</div>
+                  <div className="text-purple-300 text-sm mb-1">{t('challengePhases')}</div>
+                  <div className="text-white text-lg font-bold">{pack?.meta.phases_per_run || 5} {t('rounds')}</div>
                   <div className="text-purple-300 text-xs mt-1">
-                    Complete all phases to defeat {selectedCharacter.name}
+                    {t('completeAllPhases')} {selectedCharacter.name}
                   </div>
                 </div>
               </div>
@@ -368,13 +377,13 @@ export default function SettingsMenu() {
                 onClick={onCancelSelection}
                 className="flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg text-white font-medium transition-colors"
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 onClick={onStartGame}
                 className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg text-white font-medium transition-colors"
               >
-                ⚔️ Start Battle
+                {t('startBattle')}
               </button>
             </div>
           </div>

@@ -10,6 +10,7 @@ type SettingsState = {
   geminiModel: 'gemini-1.5-flash';
   useApi: boolean;
   reducedMotion: boolean;
+  language: 'en' | 'zh-hk';
   set<K extends keyof Omit<SettingsState, 'set'>>(key: K, value: SettingsState[K]): void;
 };
 
@@ -23,6 +24,7 @@ export const useSettings = create<SettingsState>()(
       geminiModel: 'gemini-1.5-flash',
       useApi: false,
       reducedMotion: false,
+      language: 'en',
       set: (key, value) => set(() => ({ [key]: value } as Partial<SettingsState>)),
     }),
     { name: 'ph-settings' }

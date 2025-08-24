@@ -1,0 +1,394 @@
+{
+  "meta": {
+    "name": "ai_monster_pack_v4_revised_questions",
+    "created_utc": "2025-08-24T00:00:00.000Z",
+    "phases_per_run": 5,
+    "validator_api_note": "Validators include ai_score which must call an LLM and return ONLY a number as a string."
+  },
+  "roles": [
+    {
+      "id": "engineer",
+      "name": "工程師",
+      "difficulty": "容易",
+      "description": "喺壓力之下修理壞咗嘅裝置同快速砌工具。",
+      "phases": [
+        {
+          "phase": 1,
+          "task_type": "bugfix",
+          "prompt": "你嘅目標：\n- 修復迴圈，令佢按順序打印 1 到 5（包括 5）。\n限制：\n- 唔好透露確切嘅程式碼；任何正確嘅方法都接受。\n格式：\n- 提供程式碼或者簡短嘅解釋。",
+          "bugged_code": "for(let i=1;i<5;i++){console.log(i)}",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_100_once",
+            "guidance": "Return 100 if the loop prints 1 through 5 inclusively in correct order. Return 0 otherwise. Do not reveal code."
+          }
+        },
+        {
+          "phase": 2,
+          "task_type": "bugfix",
+          "prompt": "你嘅目標：\n- 令 sum(a,b) 同步返回一個數字，所以 console.log(sum(2,3)) 輸出 5。\n限制：\n- 唔好透露確切嘅程式碼；允許多個正確嘅解決方案。\n格式：\n- 提供程式碼或者簡短嘅解釋。",
+          "bugged_code": "function sum(a,b){ return Promise.resolve(a+b); } console.log(sum(2,3));",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_100_once",
+            "guidance": "Return 100 if the function directly returns the correct sum as a number. Return 0 otherwise."
+          }
+        },
+        {
+          "phase": 3,
+          "task_type": "bugfix",
+          "prompt": "你嘅目標：\n- 只有當 status === 'armed' 時返回 true；否則返回 false。\n限制：\n- 使用正確嘅相等檢查；唔好改變輸入。\n格式：\n- 提供程式碼或者簡短嘅解釋。",
+          "bugged_code": "function isArmed(status){ if(status='armed'){return true;} return false; }",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_100_once",
+            "guidance": "Return 100 if the conditional checks equality correctly and only returns true when status is 'armed'. Return 0 otherwise."
+          }
+        },
+        {
+          "phase": 4,
+          "task_type": "bugfix",
+          "prompt": "你嘅目標：\n- 綁定一個 click handler，令點擊 #launch 會 log 'launched'。\n限制：\n- 唔好喺頁面載入時 log（唔可以即時執行）。\n格式：\n- 提供最簡單嘅程式碼或者簡短嘅解釋。",
+          "bugged_code": "<button id='launch'></button>",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_100_once",
+            "guidance": "Return 100 if a proper click handler is bound and logs 'launched' only upon click. Return 0 otherwise."
+          }
+        },
+        {
+          "phase": 5,
+          "task_type": "build",
+          "prompt": "你嘅目標：\n- 將 defaults 同 overrides 合併成一個新嘅對象。\n限制：\n- 唔好改變 defaults；結果反映 overrides。\n格式：\n- 提供程式碼或者簡短嘅解釋。",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_100_once",
+            "guidance": "Return 100 if defaults remain unchanged and overrides are applied immutably. Return 0 otherwise."
+          }
+        }
+      ]
+    },
+    {
+      "id": "bard",
+      "name": "吟遊詩人",
+      "difficulty": "容易",
+      "description": "用旋律、記憶同音樂問答擊敗怪物，用聰明提示代替直接答案。",
+      "phases": [
+        {
+          "phase": 1,
+          "task_type": "creative-hint",
+          "prompt": "你嘅目標：\n- 提供一個有趣嘅提示，關於一個經典嘅搖滾歌曲，開頭係一個鋼琴抒情曲，問現實同幻想嘅關係。\n限制：\n- 唔好直接講出歌名。\n格式：\n- 一個句子嘅提示。",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_100_once",
+            "guidance": "Return 100 if the hint indirectly and clearly refers to the correct song/artist. Return 0 otherwise."
+          }
+        },
+        {
+          "phase": 2,
+          "task_type": "creative-hint",
+          "prompt": "你嘅目標：\n- 提供一個提示，關於一個 2010 年代嘅 EDM/Pop 超級熱門歌曲，因為一個病毒式嘅口號而著名。\n限制：\n- 唔好直接講出歌名。\n格式：\n- 一個句子嘅提示。",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_100_once",
+            "guidance": "Return 100 if the hint clearly points to the correct track indirectly. Return 0 otherwise."
+          }
+        },
+        {
+          "phase": 3,
+          "task_type": "creative-hint",
+          "prompt": "你嘅目標：\n- 提供一個提示，關於一個西班牙語嘅全球熱門歌曲，曾經喺 YouTube 上創下最多觀看次數嘅紀錄。\n限制：\n- 唔好直接講出歌名。\n格式：\n- 一個句子嘅提示。",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_100_once",
+            "guidance": "Return 100 if the hint indirectly identifies the correct global hit. Return 0 otherwise."
+          }
+        },
+        {
+          "phase": 4,
+          "task_type": "creative-hint",
+          "prompt": "你嘅目標：\n- 提供一個有趣嘅提示，關於一個 K-pop 歌曲，因為一個騎馬舞而著名。\n限制：\n- 唔好直接講出歌名。\n格式：\n- 一個句子嘅提示。",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_100_once",
+            "guidance": "Return 100 if the clue indirectly conveys the correct song. Return 0 otherwise."
+          }
+        },
+        {
+          "phase": 5,
+          "task_type": "creative-hint",
+          "prompt": "你嘅目標：\n- 創造一個類似謎語嘅提示，關於一個流行嘅 alt-pop 歌曲，講緊喺鎂光燈下保持存在感。\n限制：\n- 唔好直接講出歌名。\n格式：\n- 一個句子嘅提示。",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_100_once",
+            "guidance": "Return 100 if the clue indirectly identifies the correct alt-pop hit. Return 0 otherwise."
+          }
+        }
+      ]
+    },
+    {
+      "id": "necromancer",
+      "name": "死靈法師",
+      "difficulty": "中等",
+      "description": "從遞歸同經典算法嘅深淵召喚出解決方案。",
+      "phases": [
+        {
+          "phase": 1,
+          "task_type": "recursion-two-part",
+          "prompt": "你嘅目標：\n- (A) 定義一個遞歸函數，計算 n 嘅數字總和。\n- (B) 定義一個遞歸函數，計算爬上 n 級樓梯嘅方法數（每次可以爬 1 級或 2 級）。\n限制：\n- 提供概念或程式碼答案；正確性比風格更重要。\n格式：\n- 清晰標明部分：A) ... B) ...",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_50_two_parts",
+            "guidance": "Return 100 if both recursive answers are valid and correct. Return 0 otherwise."
+          }
+        },
+        {
+          "phase": 2,
+          "task_type": "recursion-two-part",
+          "prompt": "你嘅目標：\n- (A) 遞歸地扁平化一個嵌套嘅陣列。\n- (B) 遞歸地計算一個嵌套對象嘅最大深度；null => 0。\n限制：\n- 提供概念或程式碼答案；正確性比風格更重要。\n格式：\n- 清晰標明部分：A) ... B) ...",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_50_two_parts",
+            "guidance": "Return 100 if both solutions are correct. Return 0 otherwise."
+          }
+        },
+        {
+          "phase": 3,
+          "task_type": "recursion-two-part",
+          "prompt": "你嘅目標：\n- (A) 生成所有有效嘅括號組合，當 n=3。\n- (B) 遞歸地計算 sumDigits(99)。\n限制：\n- 提供概念或程式碼答案；正確性比風格更重要。\n格式：\n- 清晰標明部分：A) ... B) ...",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_50_two_parts",
+            "guidance": "Return 100 if both recursive tasks are solved correctly. Return 0 otherwise."
+          }
+        },
+        {
+          "phase": 4,
+          "task_type": "recursion-two-part",
+          "prompt": "你嘅目標：\n- (A) 解釋對巢狀陣列（nested arrays）做遞歸時嘅基礎情況（base case）。\n- (B) 提供一個可運行嘅輸入同輸出示例。\n限制：\n- 回答要簡潔而且準確。\n格式：\n- 清楚標註部分：A) ... B) ...",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_50_two_parts",
+            "guidance": "Return 100 if both explanation and example are correct. Return 0 otherwise."
+          }
+        },
+        {
+          "phase": 5,
+          "task_type": "recursion-two-part",
+          "prompt": "你嘅目標：\n- (A) 解釋為什麼簡單嘅遞歸計算費波拿契數列（Fibonacci）嘅時間複雜度是 O(2^n)。\n- (B) 說明記憶化（memoization）嘅時間複雜度。\n限制：\n- 回答要簡潔。\n格式：\n- 清楚標註部分：A) ... B) ...",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_50_two_parts",
+            "guidance": "Return 100 if both conceptual answers are correct. Return 0 otherwise."
+          }
+        }
+      ]
+    },
+    {
+      "id": "alchemist",
+      "name": "鍊金術師",
+      "difficulty": "中等",
+      "description": "將完美程式碼變成毒藥。有意引入漏洞／錯誤—越多錯誤 = 傷害越大。",
+      "phases": [
+        {
+          "phase": 1,
+          "task_type": "poison-code",
+          "prompt": "你嘅目標：\n- 由安全嘅 DOM 渲染開始，然後用漏洞「毒化」佢。\n限制：\n- 引入獨立、真實嘅問題；避免重複。\n格式：\n- 提供程式碼顯示改動或者列出改動。",
+          "perfect_code": "function showSafe(text){ const el=document.getElementById('out'); el.textContent=text; }",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_20_bugs",
+            "guidance": "Count distinct unsafe changes. Score=count*20 capped at 100. Return only the number.",
+            "bug_catalog": [
+              {
+                "name": "innerHTML_injection",
+                "pattern": "innerHTML"
+              },
+              {
+                "name": "unsafe_eval",
+                "pattern": "eval("
+              },
+              {
+                "name": "removed_textContent",
+                "pattern": ".textContent",
+                "negate": true
+              }
+            ]
+          }
+        },
+        {
+          "phase": 2,
+          "task_type": "poison-code",
+          "prompt": "你嘅目標：\n- 由安全嘅密碼比較開始，然後用時間洩漏或弱等式「毒化」佢。\n限制：\n- 每個獨立嘅缺陷只計算一次。\n格式：\n- 提供程式碼或者列出改動。",
+          "perfect_code": "function eq(a,b){ /* constant-time compare; do not leak */ }",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_20_bugs",
+            "guidance": "Count timing or compare flaws introduced. Score=count*20 capped at 100. Return only the number.",
+            "bug_catalog": [
+              {
+                "name": "early_return",
+                "pattern": "return false"
+              },
+              {
+                "name": "loose_compare",
+                "pattern": "=="
+              }
+            ]
+          }
+        },
+        {
+          "phase": 3,
+          "task_type": "poison-code",
+          "prompt": "你嘅目標：\n- 由參數化嘅 SQL 查詢開始，將佢「毒化」成不安全嘅寫法（例如用字串連接／樣板字串將輸入直接拼入 SQL），令系統容易受到注入攻擊。\n限制：\n- 展示字串連接或樣板注入（template injection）。\n格式：\n- 提供程式碼或者列出改動。",
+          "perfect_code": "function queryUser(db,name){ return db.query('SELECT * FROM users WHERE name=?',[name]); }",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_20_bugs",
+            "guidance": "Count query concatenations. Score=count*20 capped at 100. Return only the number.",
+            "bug_catalog": [
+              {
+                "name": "plus_concat",
+                "pattern": "+ name"
+              },
+              {
+                "name": "template_concat",
+                "pattern": "${name}"
+              }
+            ]
+          }
+        },
+        {
+          "phase": 4,
+          "task_type": "poison-code",
+          "prompt": "你嘅目標：\n- 由嚴格嘅電郵驗證開始，將驗證規則「毒化」成過度寬鬆，使本應被拒嘅輸入都會通過（例如放寬 regex、移除邊界檢查，或者令檢查永遠為真）。\n限制：\n- 只計算互相獨立嘅寬鬆改動。\n格式：\n- 提供程式碼或者列出改動。",
+          "perfect_code": "const isEmail=s=>/^[\\w.-]+@[\\w.-]+\\.[A-Za-z]{2,}$/.test(s);",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_20_bugs",
+            "guidance": "Count changes that allow bad inputs. Score=count*20 capped at 100. Return only the number.",
+            "bug_catalog": [
+              {
+                "name": "over_permissive",
+                "pattern": "/.*/"
+              },
+              {
+                "name": "always_true",
+                "pattern": "return true"
+              }
+            ]
+          }
+        },
+        {
+          "phase": 5,
+          "task_type": "poison-code",
+          "prompt": "你嘅目標：\n- 用獨特方式破壞或更改 'Hello, World!' 程式。\n限制：\n- 只計算唔同嘅破壞；避免重複。\n格式：\n- 提供程式碼或者項目符號清單。",
+          "perfect_code": "console.log('Hello, World!');",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_20_bugs",
+            "guidance": "Count distinct corruptions of the program. Score=count*20 capped at 100. Return only the number."
+          }
+        }
+      ]
+    },
+    {
+      "id": "hacker",
+      "name": "黑客",
+      "difficulty": "困難",
+      "description": "檢查、解碼、揭示簡單問題並回答—唔可以直接攞 AI 嘅答案。",
+      "phases": [
+        {
+          "phase": 1,
+          "task_type": "inspect",
+          "prompt": "你嘅目標：\n- 檢查隱藏喺 HTML 註解入面嘅簡單問題，然後只作答問題。\n限制：\n- 唔好貼出隱藏嘅文字；只提供最終答案。\n格式：\n- 只提供最終答案。",
+          "hidden_html": "<!-- Q: 2+2? -->",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_100_once",
+            "guidance": "Return 100 if the provided answer is correct. Return 0 otherwise. Do not reveal the hidden question."
+          }
+        },
+        {
+          "phase": 2,
+          "task_type": "inspect",
+          "prompt": "你嘅目標：\n- 搵出隱藏喺 span 入面嘅問題並作答。\n限制：\n- 唔好貼出隱藏嘅提示。\n格式：\n- 只提供最終答案。",
+          "hidden_html": "<span class='secret' style='display:none'>What is 5*2?</span>",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_100_once",
+            "guidance": "Return 100 if the answer is correct. Return 0 otherwise."
+          }
+        },
+        {
+          "phase": 3,
+          "task_type": "decode",
+          "prompt": "你嘅目標：\n- 解碼 Base64 字串並回答揭示嘅問題。\n限制：\n- 唔好貼出解碼後嘅文字。\n格式：\n- 只提供最終答案。",
+          "hidden_data": "V2hhdCBpcyA0ICsgNA==",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_100_once",
+            "guidance": "Return 100 if the decoded question is answered correctly. Return 0 otherwise."
+          }
+        },
+        {
+          "phase": 4,
+          "task_type": "deobfuscate",
+          "prompt": "你嘅目標：\n- 將建立字串嘅程式碼解混淆並回答問題。\n限制：\n- 唔好貼出組合後嘅文字。\n格式：\n- 只提供最終答案。",
+          "hidden_js": "String.fromCharCode(54,43,50)",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_100_once",
+            "guidance": "Return 100 if the correct answer is given. Return 0 otherwise."
+          }
+        },
+        {
+          "phase": 5,
+          "task_type": "data-attr",
+          "prompt": "你嘅目標：\n- 檢查 data-q 屬性，搵出已編碼嘅數學問題並作答。\n限制：\n- 唔好貼出已編碼或已解碼嘅文字。\n格式：\n- 只提供最終答案。",
+          "hidden_html": "<div id='c' data-q='Nysz'></div>",
+          "validator": {
+            "type": "ai_score",
+            "scheme": "attack_100_once",
+            "guidance": "Return 100 if the answer is correct. Return 0 otherwise."
+          }
+        }
+      ]
+    },
+    {
+      "id": "mysterious",
+      "name": "神秘",
+      "difficulty": "不可能",
+      "description": "？？？？？？？？？？？？？？",
+      "phases": [
+        {
+          "phase": 1,
+          "task_type": "paradox",
+          "bait_question": "????????????",
+          "hint": "你肯定打得贏呢個嗎？如果唔得，應該點做？",
+          "validator": {
+            "type": "mysterious",
+            "keywords": [
+              "surrender",
+              "giv up",
+              "escape",
+              "run",
+              "quit",
+              "i forfeit",
+              "skip",
+              "gg",
+              "投降",
+              "逃走",
+              "逃跑",
+              "退出",
+              "我投降",
+              "跳過",
+              "玩完"
+            ],
+            "prompt_mask": "????????????"
+          }
+        }
+      ]
+    }
+  ]
+}
