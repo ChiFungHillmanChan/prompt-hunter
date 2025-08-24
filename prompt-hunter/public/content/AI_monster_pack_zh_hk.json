@@ -301,56 +301,51 @@
         {
           "phase": 1,
           "task_type": "inspect",
-          "prompt": "你嘅目標：\n- 檢查隱藏喺 HTML 註解入面嘅簡單問題，然後只作答問題。\n限制：\n- 唔好貼出隱藏嘅文字；只提供最終答案。\n格式：\n- 只提供最終答案。",
+          "prompt": "你嘅目標：\n- 檢查隱藏喺 HTML 註解入面嘅簡單問題，然後只作答問題。\n限制：\n- 唔好貼出隱藏嘅文字；只提供最終答案。\n格式：\n- 只提供數字。",
           "hidden_html": "<!-- Q: 2+2? -->",
           "validator": {
-            "type": "ai_score",
-            "scheme": "attack_100_once",
-            "guidance": "Return 100 if the provided answer is correct. Return 0 otherwise. Do not reveal the hidden question."
+            "type": "equals_number",
+            "value": 4
           }
         },
         {
           "phase": 2,
           "task_type": "inspect",
-          "prompt": "你嘅目標：\n- 搵出隱藏喺 span 入面嘅問題並作答。\n限制：\n- 唔好貼出隱藏嘅提示。\n格式：\n- 只提供最終答案。",
+          "prompt": "你嘅目標：\n- 搵出隱藏喺 span 入面嘅問題並作答。\n限制：\n- 唔好貼出隱藏嘅提示。\n格式：\n- 只提供數字。",
           "hidden_html": "<span class='secret' style='display:none'>What is 5*2?</span>",
           "validator": {
-            "type": "ai_score",
-            "scheme": "attack_100_once",
-            "guidance": "Return 100 if the answer is correct. Return 0 otherwise."
+            "type": "equals_number",
+            "value": 10
           }
         },
         {
           "phase": 3,
           "task_type": "decode",
-          "prompt": "你嘅目標：\n- 解碼 Base64 字串並回答揭示嘅問題。\n限制：\n- 唔好貼出解碼後嘅文字。\n格式：\n- 只提供最終答案。",
+          "prompt": "你嘅目標：\n- 解碼 Base64 字串並回答揭示嘅問題。\n限制：\n- 唔好貼出解碼後嘅文字。\n格式：\n- 只提供數字。",
           "hidden_data": "V2hhdCBpcyA0ICsgNA==",
           "validator": {
-            "type": "ai_score",
-            "scheme": "attack_100_once",
-            "guidance": "Return 100 if the decoded question is answered correctly. Return 0 otherwise."
+            "type": "equals_number",
+            "value": 8
           }
         },
         {
           "phase": 4,
           "task_type": "deobfuscate",
-          "prompt": "你嘅目標：\n- 將建立字串嘅程式碼解混淆並回答問題。\n限制：\n- 唔好貼出組合後嘅文字。\n格式：\n- 只提供最終答案。",
+          "prompt": "你嘅目標：\n- 將建立字串嘅程式碼解混淆並回答問題。\n限制：\n- 唔好貼出組合後嘅文字。\n格式：\n- 只提供數字。",
           "hidden_js": "String.fromCharCode(54,43,50)",
           "validator": {
-            "type": "ai_score",
-            "scheme": "attack_100_once",
-            "guidance": "Return 100 if the correct answer is given. Return 0 otherwise."
+            "type": "equals_number",
+            "value": 8
           }
         },
         {
           "phase": 5,
           "task_type": "data-attr",
-          "prompt": "你嘅目標：\n- 檢查 data-q 屬性，搵出已編碼嘅數學問題並作答。\n限制：\n- 唔好貼出已編碼或已解碼嘅文字。\n格式：\n- 只提供最終答案。",
+          "prompt": "你嘅目標：\n- 檢查 data-q 屬性，搵出已編碼嘅數學問題並作答。\n限制：\n- 唔好貼出已編碼或已解碼嘅文字。\n格式：\n- 只提供數字。",
           "hidden_html": "<div id='c' data-q='Nysz'></div>",
           "validator": {
-            "type": "ai_score",
-            "scheme": "attack_100_once",
-            "guidance": "Return 100 if the answer is correct. Return 0 otherwise."
+            "type": "equals_number",
+            "value": 8
           }
         }
       ]

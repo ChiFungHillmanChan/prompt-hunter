@@ -11,7 +11,7 @@ export function getCharacterStats(roleId: string) {
     case 'necromancer':
       return { health: 100, attack: 50, specialtyKey: 'darkArtsAlgorithms' as const };
     case 'alchemist':
-      return { health: 100, attack: 10, specialtyKey: 'dataTransformation' as const };
+      return { health: 100, attack: 20, specialtyKey: 'dataTransformation' as const };
     case 'hacker':
       return { health: 50, attack: 100, specialtyKey: 'securitySystems' as const };
     case 'mysterious':

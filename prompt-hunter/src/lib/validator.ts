@@ -113,7 +113,7 @@ async function scoreWithAI(
     'Output ONLY a single integer with no explanation.',
     "For 'attack_100_once': return 100 if the answer correctly solves the exact task; else 0.",
     "For 'attack_50_two_parts': return 100 only if TWO required sub-answers are both correct; else 0.",
-    "For 'attack_20_bugs': count distinct valid bug patterns introduced and return count*10 (0..100).",
+    "For 'attack_20_bugs': count distinct valid bug patterns introduced and return count*20 (0..100).",
   ].join('\n- ');
   const bugList = bugCatalog && bugCatalog.length
     ? `\nBug catalog (patterns):\n${bugCatalog.map((b) => `- ${b.name}: pattern='${b.pattern}'${b.negate ? ' (negate)' : ''}`).join('\n')}`
