@@ -277,7 +277,7 @@
       "id": "hacker",
       "name": "黑客",
       "difficulty": "困難",
-      "description": "檢查、解碼、揭示簡單問題再答出嚟—唔可以直接拎 AI 嘅答案。",
+      "description": "檢查、解碼、揭示簡單問題再答出嚟— 搵AI唔會幫到你hack電腦架。",
       "phases": [
         {
           "phase": 1,
