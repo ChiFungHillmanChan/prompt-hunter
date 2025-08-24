@@ -96,8 +96,7 @@ async function scoreWithAI(
   const { callGemini } = await import('./gemini');
   const { buildContext } = await import('./contextBuilder');
   const base = buildContext({ name: 'Player', difficulty: 'easy', id: 'player', phases: [] } as any, phase);
-  // touch 'scheme' to avoid TS unused warnings (also future branching)
-  const _scheme: string = scheme;
+  const schemeLine = `Scheme: ${scheme}`;
   const rules = [
     'Never reveal answers or full solutions; give hints only if asked later.',
     'Output ONLY a single integer with no explanation.',
@@ -109,9 +108,15 @@ async function scoreWithAI(
     ? `\nBug catalog (patterns):\n${bugCatalog.map((b) => `- ${b.name}: pattern='${b.pattern}'${b.negate ? ' (negate)' : ''}`).join('\n')}`
     : '';
   const prompt = `${base}
-\nValidator Guidance:\n${guidance}
-\nRules:\n- ${rules}${bugList}
-\nUser Answer:\n${userText}`;
+\n${schemeLine}
+Validator Guidance:
+${guidance}
+
+Rules:
+- ${rules}${bugList}
+
+User Answer:
+${userText}`;
   try {
     const res = await callGemini(apiKey, prompt);
     const text = (res.text || '').trim();
