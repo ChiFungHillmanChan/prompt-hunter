@@ -10,6 +10,7 @@ export type Validator =
   | { type: 'song_guess'; title_keywords: string[]; artist_keywords: string[] }
   | { type: 'manual_review'; note?: string }
   | { type: 'js_eval'; code: string }
+  | { type: 'heal_exact_copy'; guidance: string }
   // AI numeric score validator; returns only a number string (e.g., '100' or '0')
   | { type: 'ai_score'; scheme: 'attack_100_once' | 'attack_50_two_parts' | 'attack_20_bugs'; guidance: string; bug_catalog?: { name: string; pattern: string; negate?: boolean; points?: number }[] };
 
@@ -33,6 +34,7 @@ export interface Phase {
   hidden_html?: string;
   hidden_js?: string;
   hidden_data?: string;
+  sentences?: string[]; // For healer phases
   validator?: Validator;
 }
 

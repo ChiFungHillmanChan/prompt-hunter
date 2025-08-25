@@ -10,6 +10,7 @@ import React from 'react';
 import { getCharacterStats } from '../lib/characterStats';
 import { selectDetectiveQuestions } from '../store/session';
 import HowToPlay from '../components/HowToPlay';
+import { pickCharacterSprite as pickSprite } from '../lib/characterStats';
 
 export default function SettingsMenu() {
   const nav = useNavigate();
@@ -20,7 +21,7 @@ export default function SettingsMenu() {
   const [apiKey, setApiKey] = React.useState<string>(() => sessionStorage.getItem('gemini_api_key') || '');
   const [newApiKey, setNewApiKey] = React.useState('');
   const [showKeyInput, setShowKeyInput] = React.useState(false);
-  const [selectedCharacter, setSelectedCharacter] = React.useState<{ name: string; id: string; difficulty: string; description?: string } | null>(null);
+  const [selectedCharacter, setSelectedCharacter] = React.useState<{ name: string; id: string; difficulty: string; description?: string; phases_per_run?: number } | null>(null);
   const [showRestartConfirmation, setShowRestartConfirmation] = React.useState<{ name: string; id: string } | null>(null);
   const [showHowToPlay, setShowHowToPlay] = React.useState(false);
 
@@ -443,7 +444,7 @@ export default function SettingsMenu() {
                 <div className="text-center">
                   <div className="text-purple-300 text-sm mb-1">{t('challengePhases')}</div>
                   <div className="text-white text-lg font-bold">
-                    {selectedCharacter.id === 'detective' ? '1' : (pack?.meta.phases_per_run || 5)} {t('rounds')}
+                    {selectedCharacter.phases_per_run} {t('rounds')}
                   </div>
                   <div className="text-purple-300 text-xs mt-1">
                     {t('completeAllPhases')} {selectedCharacter.name} {t('completeAllPhasesEnd')}
@@ -525,15 +526,4 @@ export default function SettingsMenu() {
     </div>
   );
 }
-
-function pickSprite(id: string): string {
-  if (id.toLowerCase().includes('bard')) return '/sprites/bard.svg';
-  if (id.toLowerCase().includes('necro')) return '/sprites/necromancer.svg';
-  if (id.toLowerCase().includes('alch')) return '/sprites/alchemist.svg';
-  if (id.toLowerCase().includes('hack')) return '/sprites/hacker.svg';
-  if (id.toLowerCase().includes('myst')) return '/sprites/mysterious.svg';
-  if (id.toLowerCase().includes('detective')) return '/sprites/detective.svg';
-  return '/sprites/engineer.svg';
-}
-
 

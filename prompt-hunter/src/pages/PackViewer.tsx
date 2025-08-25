@@ -6,6 +6,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { translations } from '../lib/translations';
 import { getCharacterStats } from '../lib/characterStats';
 import { useSettings } from '../store/settings';
+import { pickCharacterSprite as pickSprite } from '../lib/characterStats';
 import React from 'react';
 
 
@@ -31,16 +32,6 @@ function getGameTypes(id: string): string[] {
   }
   // Default fallback (Engineer or others)
   return ['typeDebugCode', 'typeCombatChallenge'];
-}
-
-function pickSprite(id: string): string {
-  if (id.toLowerCase().includes('bard')) return '/sprites/bard.svg';
-  if (id.toLowerCase().includes('necro')) return '/sprites/necromancer.svg';
-  if (id.toLowerCase().includes('alch')) return '/sprites/alchemist.svg';
-  if (id.toLowerCase().includes('hack')) return '/sprites/hacker.svg';
-  if (id.toLowerCase().includes('detective')) return '/sprites/detective.svg';
-  if (id.toLowerCase().includes('myst')) return '/sprites/mysterious.svg';
-  return '/sprites/engineer.svg';
 }
 
 function getDifficultyColor(difficulty: string) {

@@ -10,6 +10,7 @@
       "id": "engineer",
       "name": "Engineer",
       "difficulty": "easy",
+      "phases_per_run": 5,
       "description": "Fixes broken contraptions and builds quick tools under pressure.",
       "phases": [
         {
@@ -72,6 +73,7 @@
       "id": "bard",
       "name": "Bard",
       "difficulty": "easy",
+      "phases_per_run": 5,
       "description": "Beats monsters with melody, memory, and music trivia using clever hints instead of direct answers.",
       "phases": [
         {
@@ -120,6 +122,7 @@
       "id": "necromancer",
       "name": "Necromancer",
       "difficulty": "medium",
+      "phases_per_run": 5,
       "description": "Raises math puzzles from the depths — Necromancer always attacks twice.",
       "phases": [
         {
@@ -168,6 +171,7 @@
       "id": "alchemist",
       "name": "Alchemist",
       "difficulty": "medium",
+      "phases_per_run": 5,
       "description": "Turns perfect code into poison. Intentionally introduce bugs/vulns — more bugs = more damage.",
       "phases": [
         {
@@ -253,11 +257,88 @@
           "assistant": "Consider syntax errors, API misuse, environmental assumptions, or output tampering. Each corruption should be a clearly different way to break or poison the simple program."
         }
       ]
-    },    
+    }, 
+    {
+      "id": "healer",
+      "name": "Healer",
+      "feature": "new",
+      "difficulty": "medium",
+      "phases_per_run": 3,
+      "description": "Don't fight the monster - protect yourself instead. The monster gets tired after several attacks.",
+      "phases": [
+        {
+          "phase": 1,
+          "task_type": "speed-type",
+          "question": "Please copy the following sentence exactly. Every character must be identical.",
+          "sentences": [
+            "The cat is sleeping.",
+            "I like to read books.",
+            "The sun is shining.",
+            "Coffee tastes good.",
+            "Birds are singing.",
+            "The garden is beautiful.",
+            "Music makes me happy.",
+            "Learning is fun.",
+            "The sky is blue.",
+            "Time flies quickly."
+          ],
+          "validator": {
+            "type": "heal_exact_copy",
+            "guidance": "Only return 100 if the player's answer matches the target sentence character by character (case, spaces, punctuation). Otherwise return 0, providing error_count using Levenshtein distance."
+          },
+          "assistant": "How to win as Healer: Copy my sentences perfectly to heal yourself (max 30 HP) and frighten the monster (monster -5 HP). If you make mistakes, each error reduces healing by 1 point, and the monster won't take -5. Requesting new sentences will instantly cost you 3 HP."
+        },
+        {
+          "phase": 2,
+          "task_type": "speed-type",
+          "question": "Please copy the following longer sentence exactly. Every letter and punctuation must be identical.",
+          "sentences": [
+            "The quick brown fox jumps over the lazy dog near the fence.",
+            "Programming requires patience, practice, and logical thinking skills.",
+            "Yesterday, we visited the museum and saw many interesting exhibits.",
+            "This delicious chocolate cake was made by my grandmother's recipe.",
+            "The weather forecast predicts sunny skies and warm temperatures today.",
+            "Reading books opens your mind to new ideas and perspectives.",
+            "The children are playing happily in the colorful playground area.",
+            "Technology has changed the way we communicate and work together.",
+            "Exercise is important for maintaining good physical and mental health.",
+            "Traveling to new places helps us learn about different cultures."
+          ],
+          "validator": {
+            "type": "heal_exact_copy",
+            "guidance": "Only return 100 if the player's answer is completely identical to the target sentence (including spaces and punctuation). Otherwise return 0, providing error_count."
+          },
+          "assistant": "Reminder: Perfect copy = full healing (max 20 per attempt, capped at 30 HP) and monster takes -5 HP. With errors, each mistake reduces healing by 1 point, and monster takes no damage. Requesting new sentences costs -3 HP instantly."
+        },
+        {
+          "phase": 3,
+          "task_type": "speed-type",
+          "question": "Please copy the following gibberish string exactly. Every symbol must be identical.",
+          "sentences": [
+            "X9#mK2@pL7$vN4!qR8%tY3&wZ6*jF1~hG5",
+            "aB3$dE7#fG1@hJ9%kL2&mN6*pQ4!rS8~tU5",
+            "qW2#eR5$tY8@uI1%oP3&aS6*dF9!gH4~jK7",
+            "zX4$cV7#bN1@mQ5%wE8&rT2*yU6!iO9~pA3",
+            "lK8#jH3$gF6@dS1%aN4&zX7*cV2!bM9~qW5",
+            "mN7$bV4#zX1@cQ8%wE5&rT9*yU3!iO6~pA2",
+            "fG3#dS6$aQ9@zW2%xC5&vB8*nM1!hJ4~kL7",
+            "pL5$oK8#iH1@uY4%tR7&eW2*qN9!mB6~vC3",
+            "rT9#eW2$qA5@dG8%fJ1&hK4*lZ7!pX6~yU3",
+            "sA6$fD9#gH2@jK5%lM8&nP1*qT4!wE7~rY3"
+          ],
+          "validator": {
+            "type": "heal_exact_copy",
+            "guidance": "Only return 100 if the player's answer is completely identical (case, symbols, spaces all match). Otherwise return 0, providing error_count."
+          },
+          "assistant": "Final trial: The string may be meaningless. You must copy it exactly as shown. Requesting new sentences will still cost 3 HP instantly."
+        }
+      ]
+    },       
     {
       "id": "hacker",
       "name": "Hacker",
       "difficulty": "hard",
+      "phases_per_run": 5,
       "description": "Inspect, decode, reveal the easy question, answer it—without getting the answer directly",
       "phases": [
         {
@@ -312,6 +393,7 @@
       "name": "Detective",
       "feature": "new",
       "difficulty": "hard",
+      "phases_per_run": 1,
       "description": "Investigates strange cases with hidden truths. Players must ask yes/no questions, gather evidence, and reconstruct the real story step by step.",
       "phases": [
         {
@@ -390,6 +472,7 @@
       "id": "mysterious",
       "name": "Mysterious",
       "difficulty": "impossible",
+      "phases_per_run": 1,
       "description": "????????????????????",
       "phases": [
         {

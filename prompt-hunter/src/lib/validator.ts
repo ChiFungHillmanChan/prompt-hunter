@@ -126,6 +126,9 @@ export async function validateAnswer(
         score: allRequiredFound ? 100 : 0
       };
     }
+    case 'heal_exact_copy': {
+      return await handleHealExactCopyFromSentences(text, phase);
+    }
     case 'mysterious': {
       const lower = text.toLowerCase();
       const keywords = Array.isArray(v.keywords) ? v.keywords : [];
@@ -135,6 +138,232 @@ export async function validateAnswer(
     }
     default:
       return { ok: false, message: 'Unknown validator' };
+  }
+}
+
+function calculateLevenshteinDistance(str1: string, str2: string): number {
+  const len1 = str1.length;
+  const len2 = str2.length;
+  
+  // Create a 2D array for dynamic programming
+  const dp: number[][] = Array(len1 + 1).fill(null).map(() => Array(len2 + 1).fill(0));
+  
+  // Initialize base cases
+  for (let i = 0; i <= len1; i++) {
+    dp[i][0] = i;
+  }
+  for (let j = 0; j <= len2; j++) {
+    dp[0][j] = j;
+  }
+  
+  // Fill the DP table
+  for (let i = 1; i <= len1; i++) {
+    for (let j = 1; j <= len2; j++) {
+      if (str1[i - 1] === str2[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1]; // No operation needed
+      } else {
+        dp[i][j] = 1 + Math.min(
+          dp[i - 1][j],     // Deletion
+          dp[i][j - 1],     // Insertion
+          dp[i - 1][j - 1]  // Substitution
+        );
+      }
+    }
+  }
+  
+  return dp[len1][len2];
+}
+
+// Store state for healer sentences
+const healerSentenceState: { 
+  [phaseKey: string]: { 
+    currentSentenceIndex: number;
+    availableSentences: string[];
+    isUsingPremade: boolean;
+  } 
+} = {};
+
+// Function to clear healer target sentence for a specific phase (for new sentence requests)
+export function clearHealerTargetSentence(phaseNumber: number, taskType: string) {
+  const phaseKey = `${phaseNumber}-${taskType}`;
+  if (healerSentenceState[phaseKey]) {
+    healerSentenceState[phaseKey].currentSentenceIndex++;
+  }
+}
+
+// Function to get AI-generated sentences when premade ones are exhausted
+async function generateAISentences(phase: Phase): Promise<string[]> {
+  try {
+    const apiKey = sessionStorage.getItem('gemini_api_key') || '';
+    if (!apiKey) {
+      throw new Error('API key required for AI generation');
+    }
+    
+    const { callGemini } = await import('./gemini');
+    
+    const prompt = `Generate 5 new sentences for a typing practice game. The sentences should be:
+- Similar in length and complexity to the original sentences
+- Engaging and varied in content
+- Appropriate for all ages
+- Each sentence should be unique and interesting
+
+Original sentences for reference:
+${(phase.sentences || []).slice(0, 3).join('\n')}
+
+Generate exactly 5 new sentences, one per line, with no numbering or extra formatting:`;
+
+    const res = await callGemini(apiKey, prompt);
+    const text = res.text || '';
+    
+    // Parse the response into individual sentences
+    const sentences = text
+      .split('\n')
+      .map(s => s.trim())
+      .filter(s => s.length > 0 && !s.match(/^\d+\./)) // Remove empty lines and numbered items
+      .slice(0, 5); // Take first 5 valid sentences
+    
+    if (sentences.length === 0) {
+      throw new Error('Failed to generate sentences');
+    }
+    
+    return sentences;
+  } catch (error) {
+    console.error('Failed to generate AI sentences:', error);
+    // Return some fallback sentences if AI generation fails
+    return [
+      "The weather is beautiful today.",
+      "I enjoy reading interesting books.",
+      "Learning new things is exciting.",
+      "Friends make life more enjoyable.",
+      "Every day brings new opportunities."
+    ];
+  }
+}
+
+// Function to get the next sentence for healer without validation
+export function getNextHealerSentence(phase: Phase): { target_sentence?: string; sentences_remaining?: number; isUsingPremade?: boolean } | null {
+  const sentences = phase.sentences || [];
+  
+  if (sentences.length === 0) {
+    return null;
+  }
+  
+  const phaseKey = `${phase.phase}-${phase.task_type}`;
+  
+  // Initialize state for this phase if not exists
+  if (!healerSentenceState[phaseKey]) {
+    healerSentenceState[phaseKey] = {
+      currentSentenceIndex: 0,
+      availableSentences: [...sentences], // copy array
+      isUsingPremade: true
+    };
+  }
+  
+  const state = healerSentenceState[phaseKey];
+  
+  // Check if we've exhausted premade sentences and need to generate new ones
+  if (state.isUsingPremade && state.currentSentenceIndex >= sentences.length) {
+    // Return null to indicate we need AI generation
+    return null;
+  }
+  
+  const sentencesRemaining = Math.max(0, state.availableSentences.length - state.currentSentenceIndex);
+  
+  // Check if no more sentences available
+  if (state.currentSentenceIndex >= state.availableSentences.length) {
+    return null;
+  }
+  
+  const targetSentence = state.availableSentences[state.currentSentenceIndex];
+  
+  return { 
+    target_sentence: targetSentence,
+    sentences_remaining: sentencesRemaining,
+    isUsingPremade: state.isUsingPremade
+  };
+}
+
+async function handleHealExactCopyFromSentences(userText: string, phase: Phase): Promise<{ ok: boolean; message: string; score?: number; error_count?: number; target_sentence?: string; sentences_remaining?: number }> {
+  
+  const sentences = phase.sentences || [];
+  
+  if (sentences.length === 0) {
+    return { ok: false, message: 'No sentences available for this phase' };
+  }
+  
+  const phaseKey = `${phase.phase}-${phase.task_type}`;
+  
+  // Initialize state for this phase if not exists
+  if (!healerSentenceState[phaseKey]) {
+    healerSentenceState[phaseKey] = {
+      currentSentenceIndex: 0,
+      availableSentences: [...sentences], // copy array
+      isUsingPremade: true
+    };
+  }
+  
+  const state = healerSentenceState[phaseKey];
+  
+  // Check if we've exhausted premade sentences and need to generate new ones
+  if (state.isUsingPremade && state.currentSentenceIndex >= sentences.length) {
+    // Switch to AI-generated sentences
+    try {
+      const aiSentences = await generateAISentences(phase);
+      state.availableSentences = aiSentences;
+      state.currentSentenceIndex = 0;
+      state.isUsingPremade = false;
+    } catch (error) {
+      // If AI generation fails, return error
+      return { 
+        ok: false, 
+        message: 'No more sentences available. Please request new ones.', 
+        score: 0, 
+        target_sentence: '', 
+        sentences_remaining: 0 
+      };
+    }
+  }
+  
+  const sentencesRemaining = Math.max(0, state.availableSentences.length - state.currentSentenceIndex);
+  
+  // Check if no more sentences available (this shouldn't happen with AI generation, but safety check)
+  if (state.currentSentenceIndex >= state.availableSentences.length) {
+    return { 
+      ok: false, 
+      message: 'No more sentences available', 
+      score: 0, 
+      target_sentence: '', 
+      sentences_remaining: 0 
+    };
+  }
+  
+  const targetSentence = state.availableSentences[state.currentSentenceIndex];
+  
+  // Calculate exact match and error count
+  const isExactMatch = userText === targetSentence;
+  const errorCount = calculateLevenshteinDistance(userText, targetSentence);
+  
+  if (isExactMatch) {
+    // Move to next sentence
+    state.currentSentenceIndex++;
+    
+    return { 
+      ok: true, 
+      message: '100', 
+      score: 100, 
+      error_count: 0, 
+      target_sentence: targetSentence,
+      sentences_remaining: sentencesRemaining - 1
+    };
+  } else {
+    return { 
+      ok: false, 
+      message: '0', 
+      score: 0, 
+      error_count: errorCount, 
+      target_sentence: targetSentence,
+      sentences_remaining: sentencesRemaining
+    };
   }
 }
 
@@ -159,7 +388,7 @@ function runInWorker(code: string, input: string): Promise<{ ok: boolean; error?
 }
 
 async function scoreWithAI(
-  scheme: 'attack_100_once' | 'attack_50_two_parts' | 'attack_20_bugs',
+  scheme: 'attack_100_once' | 'attack_50_two_parts' | 'attack_20_bugs' | 'heal_exact_copy',
   guidance: string,
   userText: string,
   phase: Phase,

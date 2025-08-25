@@ -10,6 +10,7 @@
       "id": "engineer",
       "name": "工程師",
       "difficulty": "容易",
+      "phases_per_run": 5,
       "description": "喺壓力之下修理壞咗嘅裝置同快速砌工具。",
       "phases": [
         {
@@ -71,6 +72,7 @@
       "id": "bard",
       "name": "吟遊詩人",
       "difficulty": "容易",
+      "phases_per_run": 5,
       "description": "用旋律、記憶同音樂問答擊敗怪物，用聰明提示代替直接答案。",
       "phases": [
         {
@@ -139,6 +141,7 @@
       "id": "necromancer",
       "name": "死靈法師",
       "difficulty": "中等",
+      "phases_per_run": 5,  
       "description": "從數學深淵召喚邏輯謎題 -- 死靈法師每次都會連續攻擊兩次",
       "phases": [
         {
@@ -187,6 +190,7 @@
       "id": "alchemist",
       "name": "鍊金術師",
       "difficulty": "中等",
+      "phases_per_run": 5,  
       "description": "將完美程式碼變成毒藥。有意引入漏洞／錯誤 — 越多錯誤 = 傷害越大。",
       "phases": [
         {
@@ -272,11 +276,88 @@
           "assistant": "你可以考慮從幾個方面嚟破壞呢個簡單程式：例如語法錯誤、API 替換、環境依賴或者副作用等等。最重要係每個破壞方法都要係唔同類型嘅呀。"
         }
       ]
-    },    
+    },  
+    {
+      "id": "healer",
+      "name": "治療者",
+      "feature": "new",
+      "difficulty": "中等",
+      "phases_per_run": 3,
+      "description": "不要與怪物戰鬥，而是保護自己。怪物在多次攻擊後會變得疲倦。",
+      "phases": [
+        {
+          "phase": 1,
+          "task_type": "speed-type",
+          "question": "請完整複製以下句子。每一個字元都必須相同。",
+          "sentences": [
+            "今日天氣很好。",
+            "我喜歡喝茶。",
+            "書本在桌子上。",
+            "貓咪很可愛。",
+            "明天會下雨。",
+            "花園裡有很多花。",
+            "這個蛋糕很甜。",
+            "孩子們在公園玩耍。",
+            "音樂讓人放鬆。",
+            "學習新知識很有趣。"
+          ],
+          "validator": {
+            "type": "heal_exact_copy",
+            "guidance": "只有當玩家的答案與目標句子完全逐字元相符（大小寫、空格、標點）時，才回傳 100。否則回傳 0，並使用 Levenshtein 距離提供 error_count。"
+          },
+          "assistant": "如何以治療者取勝：完全正確地複製我的句子即可治癒自己（最多 30 生命值）並嚇退怪物（怪物 -5 生命值）。若有錯誤，每個錯誤會少回 1 點生命，且怪物不會扣 -5。若要求我提供新句子，你會立即失去 3 點生命。"
+        },
+        {
+          "phase": 2,
+          "task_type": "speed-type",
+          "question": "請完整複製以下較長的句子。每一個字母與標點都必須相同。",
+          "sentences": [
+            "春天來了，花開滿園，鳥兒歌唱得特別動聽。",
+            "這本書很有趣，我已經讀了三遍，仍然愛不釋手。",
+            "昨天下午，我們在咖啡廳裡談論了很多有意思的話題。",
+            "媽媽做的紅燒肉又香又嫩，是我最喜歡的家常菜。",
+            "這家餐廳的服務很好，食物也很美味，值得推薦。",
+            "學習程式設計需要很多練習，但是非常有成就感。",
+            "週末的時候，我喜歡到海邊散步，聽海浪聲。",
+            "這幅畫的色彩很豐富，構圖也很有創意和想像力。",
+            "運動對身體健康很重要，我每天都會抽時間鍛煉。",
+            "旅行可以開闊視野，體驗不同的文化和風土人情。"
+          ],
+          "validator": {
+            "type": "heal_exact_copy",
+            "guidance": "只有當玩家的答案與目標句子完全相同（包含空格與標點）時，才回傳 100。否則回傳 0，並提供 error_count。"
+          },
+          "assistant": "提醒：完全複製＝完整治癒（每次最多 20 點，且不超過 30 上限）並使怪物 -5 生命值。有錯誤時，每個錯誤會少回 1 點生命，且怪物不會扣 -5。要求新句子會立即 -3 生命。"
+        },
+        {
+          "phase": 3,
+          "task_type": "speed-type",
+          "question": "請完整複製以下亂碼字串。每一個符號都必須相同。",
+          "sentences": [
+            "X9#mK2@pL7$vN4!qR8%tY3&wZ6*jF1~hG5",
+            "aB3$dE7#fG1@hJ9%kL2&mN6*pQ4!rS8~tU5",
+            "qW2#eR5$tY8@uI1%oP3&aS6*dF9!gH4~jK7",
+            "zX4$cV7#bN1@mQ5%wE8&rT2*yU6!iO9~pA3",
+            "lK8#jH3$gF6@dS1%aN4&zX7*cV2!bM9~qW5",
+            "mN7$bV4#zX1@cQ8%wE5&rT9*yU3!iO6~pA2",
+            "fG3#dS6$aQ9@zW2%xC5&vB8*nM1!hJ4~kL7",
+            "pL5$oK8#iH1@uY4%tR7&eW2*qN9!mB6~vC3",
+            "rT9#eW2$qA5@dG8%fJ1&hK4*lZ7!pX6~yU3",
+            "sA6$fD9#gH2@jK5%lM8&nP1*qT4!wE7~rY3"
+          ],
+          "validator": {
+            "type": "heal_exact_copy",
+            "guidance": "只有當玩家的答案完全相同（大小寫、符號、空格皆一致）時，才回傳 100。否則回傳 0，並提供 error_count。"
+          },
+          "assistant": "最後的試煉：字串可能毫無意義。一定要完全一致地複製。若要求新句子，仍會立即損失 3 點生命。"
+        }
+      ]
+    },      
     {
       "id": "hacker",
       "name": "黑客",
       "difficulty": "困難",
+      "phases_per_run": 5,
       "description": "檢查、解碼、揭示簡單問題再答出嚟— 搵AI唔會幫到你hack電腦架。",
       "phases": [
         {
@@ -341,6 +422,7 @@
       "name": "偵探",
       "feature": "new",
       "difficulty": "困難",
+      "phases_per_run": 1,
       "description": "調查離奇案件，追查隱藏嘅真相。玩家需要透過發問「是 / 否 / 不相關」問題，逐步拼湊出完整故事。",
       "phases": [
         {
@@ -419,6 +501,7 @@
       "id": "mysterious",
       "name": "神秘人物",
       "difficulty": "不可能",
+      "phases_per_run": 1,
       "description": "？？？？？？？？？？？？？？",
       "phases": [
         {

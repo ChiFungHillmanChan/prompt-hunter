@@ -12,16 +12,7 @@ import AnswerPanel from '../components/AnswerPanel';
 import ChatPanel from '../components/ChatPanel';
 import { getCharacterStats } from '../lib/characterStats';
 import { selectDetectiveQuestions } from '../store/session';
-
-function pickCharacterSprite(id: string): string {
-  if (id.toLowerCase().includes('bard')) return '/sprites/bard.svg';
-  if (id.toLowerCase().includes('necro')) return '/sprites/necromancer.svg';
-  if (id.toLowerCase().includes('alch')) return '/sprites/alchemist.svg';
-  if (id.toLowerCase().includes('hack')) return '/sprites/hacker.svg';
-  if (id.toLowerCase().includes('myst')) return '/sprites/mysterious.svg';
-  if (id.toLowerCase().includes('detective')) return '/sprites/detective.svg';
-  return '/sprites/engineer.svg';
-}
+import { pickCharacterSprite } from '../lib/characterStats';
 
 export default function PlayPage() {
   const { roleId } = useParams();
@@ -190,7 +181,7 @@ export default function PlayPage() {
           lastMonsterHP.current = s.monsterHP;
         }
         
-        if (next <= 0 && role.id !== 'detective') {
+        if (next <= 0 && role.id !== 'detective' && role.id !== 'healer') {
           const newHp = Math.max(0, s.playerHP - settings.monsterDamagePerTick);
           
           // Trigger player damage animation
@@ -235,6 +226,61 @@ export default function PlayPage() {
         // For detective, don't auto-advance attack timer
         if (role.id === 'detective') {
           return s;
+        }
+        
+        // For healer, special attack logic: both healer and monster take damage when time runs out
+        if (role.id === 'healer' && next <= 0) {
+          const healerDamage = settings.monsterDamagePerTick;
+          const monsterDamage = 3; // Monster self-damage
+          
+          const newPlayerHP = Math.max(0, s.playerHP - healerDamage);
+          const newMonsterHP = Math.max(0, s.monsterHP - monsterDamage);
+          
+          // Trigger both damage animations
+          if (newPlayerHP < s.playerHP) {
+            setPlayerShaking(true);
+            setShowPlayerDamage(true);
+            setTimeout(() => setPlayerShaking(false), 300);
+            setTimeout(() => setShowPlayerDamage(false), 800);
+          }
+          
+          if (newMonsterHP < s.monsterHP) {
+            setMonsterShaking(true);
+            setShowMonsterDamage(true);
+            setTimeout(() => setMonsterShaking(false), 300);
+            setTimeout(() => setShowMonsterDamage(false), 800);
+          }
+          
+          // Check if healer died
+          if (newPlayerHP <= 0) {
+            setTimeout(() => {
+              try { if (role) localStorage.removeItem(`ph-progress-${role.id}`); } catch {
+                // Failed to remove saved progress
+              }
+              // Force a page reload to return to main menu
+              window.location.href = '/';
+            }, 800);
+            return { ...s, playerHP: 0, running: false, nextAttackMs: settings.attackIntervalMs };
+          }
+          
+          // Save progress
+          try {
+            if (role) {
+              localStorage.setItem(
+                `ph-progress-${role.id}`,
+                JSON.stringify({
+                  phaseIndex: s.phaseIndex,
+                  monsterHP: newMonsterHP,
+                  maxMonsterHP: s.maxMonsterHP,
+                  playerHP: newPlayerHP,
+                })
+              );
+            }
+          } catch {
+            // Failed to save progress
+          }
+          
+          return { ...s, playerHP: newPlayerHP, monsterHP: newMonsterHP, nextAttackMs: settings.attackIntervalMs };
         }
         
         return { ...s, nextAttackMs: next };
@@ -394,7 +440,54 @@ export default function PlayPage() {
                 <AnswerPanel
                   key={`${role.id}-${session.phaseIndex}`}
                   phase={currentPhase}
-                  onScore={(score) => {
+                  roleId={role.id}
+                  onRequestNewSentence={async () => {
+                    // Healer requests new sentence: instant -3 HP
+                    if (role.id === 'healer') {
+                      const newPlayerHP = Math.max(0, session.playerHP - 3);
+                      useSession.setState({ playerHP: newPlayerHP });
+                      
+                      // Clear the cached target sentence to force generation of a new one
+                      const { clearHealerTargetSentence } = await import('../lib/validator');
+                      clearHealerTargetSentence(currentPhase.phase, currentPhase.task_type);
+                      
+                      // Clear the current target sentence in the UI to trigger new generation
+                      // This will be handled by the AnswerPanel component
+                      
+                      // Check if healer died
+                      if (newPlayerHP <= 0) {
+                        setTimeout(() => {
+                          try {
+                            localStorage.removeItem(`ph-progress-${role.id}`);
+                          } catch {
+                            // Failed to remove saved progress
+                          }
+                          // Force a page reload to return to main menu
+                          window.location.href = '/';
+                        }, 800);
+                        useSession.setState({ running: false });
+                        return;
+                      }
+                      
+                      push('error', 'Requested new sentence: -3 HP!');
+                      
+                      // Save progress
+                      try {
+                        localStorage.setItem(
+                          `ph-progress-${role.id}`,
+                          JSON.stringify({
+                            phaseIndex: session.phaseIndex,
+                            monsterHP: session.monsterHP,
+                            maxMonsterHP: session.maxMonsterHP,
+                            playerHP: newPlayerHP,
+                          })
+                        );
+                      } catch {
+                        // Failed to save progress
+                      }
+                    }
+                  }}
+                  onScore={(score, validationResult) => {
                     // Detective custom logic
                     if (role.id === 'detective') {
                       if (score >= 100) {
@@ -455,6 +548,80 @@ export default function PlayPage() {
                         }
                       }
                       // For detective, incorrect answers don't do anything here (damage is handled by AI responses)
+                      return;
+                    }
+                    
+                    // Healer custom logic
+                    if (role.id === 'healer') {
+                      // Handle validation result for healer
+                      const errorCount = validationResult?.error_count || 0;
+                      
+                      if (score >= 100) {
+                        // Perfect copy: heal 20 HP (capped at 30) and monster takes 5 damage
+                        const healAmount = Math.min(20, 30 - session.playerHP);
+                        const newPlayerHP = Math.min(30, session.playerHP + healAmount);
+                        const newMonsterHP = Math.max(0, session.monsterHP - 5);
+                        
+                        useSession.setState({ 
+                          playerHP: newPlayerHP,
+                          monsterHP: newMonsterHP 
+                        });
+                        
+                        push('success', `Healed ${healAmount} HP! Monster takes 5 damage!`);
+                        
+                        // Check if monster is defeated
+                        if (newMonsterHP <= 0) {
+                          const nextPhase = session.phaseIndex + 1;
+                          if (nextPhase >= phasesPerRun) {
+                            markRoleWin(role.id);
+                            push('success', 'Victory!');
+                            if (rafRef.current) {
+                              cancelAnimationFrame(rafRef.current);
+                              rafRef.current = null;
+                            }
+                            useSession.setState({ running: false });
+                            setShowVictoryModal(true);
+                          } else {
+                            const nextMonsterHP = 100;
+                            useSession.setState({
+                              phaseIndex: nextPhase,
+                              monsterHP: nextMonsterHP,
+                              maxMonsterHP: nextMonsterHP,
+                            });
+                            push('success', 'Phase cleared!');
+                            setShowPhaseClearModal(true);
+                          }
+                        }
+                      } else {
+                        // Imperfect copy: heal reduced by error count, no monster damage
+                        const baseHeal = 20;
+                        const actualHeal = Math.max(0, baseHeal - errorCount);
+                        const healAmount = Math.min(actualHeal, 30 - session.playerHP);
+                        const newPlayerHP = Math.min(30, session.playerHP + healAmount);
+                        
+                        useSession.setState({ playerHP: newPlayerHP });
+                        
+                        if (healAmount > 0) {
+                          push('info', `Imperfect copy: healed ${healAmount} HP (${errorCount} errors)`);
+                        } else {
+                          push('error', `Too many errors (${errorCount}): no healing!`);
+                        }
+                      }
+                      
+                      // Save progress
+                      try {
+                        localStorage.setItem(
+                          `ph-progress-${role.id}`,
+                          JSON.stringify({
+                            phaseIndex: session.phaseIndex,
+                            monsterHP: session.monsterHP,
+                            maxMonsterHP: session.maxMonsterHP,
+                            playerHP: session.playerHP,
+                          })
+                        );
+                      } catch {
+                        // Failed to save progress
+                      }
                       return;
                     }
                     

@@ -16,6 +16,8 @@ export function getCharacterStats(roleId: string) {
       return { health: 100, attack: 100, specialtyKey: 'securitySystems' as const };
     case 'detective':
       return { health: 30, attack: 20, specialtyKey: 'detectiveMysteries' as const };
+    case 'healer':
+      return { health: 30, attack: 0, heal: 20, specialtyKey: 'healingArts' as const };
     case 'mysterious':
       return { health: 100000000, attack: 100000000, specialtyKey: 'unknownPowers' as const };
     default:
@@ -34,6 +36,7 @@ export function pickCharacterSprite(id: string): string {
   if (id.toLowerCase().includes('alch')) return '/sprites/alchemist.svg';
   if (id.toLowerCase().includes('hack')) return '/sprites/hacker.svg';
   if (id.toLowerCase().includes('detective')) return '/sprites/detective.svg';
+  if (id.toLowerCase().includes('healer')) return '/sprites/healer.svg';
   if (id.toLowerCase().includes('myst')) return '/sprites/mysterious.svg';
   return '/sprites/engineer.svg';
 }
