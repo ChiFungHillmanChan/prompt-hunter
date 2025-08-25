@@ -82,13 +82,23 @@ export default function PackViewer() {
     setShowRestartConfirmation(character);
   };
 
-  const onConfirmRestart = () => {
+  const onConfirmRestart = async () => {
     if (showRestartConfirmation) {
       // Clear character progress from localStorage
       try {
         localStorage.removeItem(`ph-progress-${showRestartConfirmation.id}`);
       } catch {
         // Failed to remove character progress
+      }
+      
+      // Reset healer sentence state if restarting healer
+      if (showRestartConfirmation.id === 'healer') {
+        try {
+          const { clearAllHealerSentenceState } = await import('../lib/validator');
+          clearAllHealerSentenceState();
+        } catch {
+          // Failed to reset healer sentence state
+        }
       }
       
       // Reset completed role in progress store

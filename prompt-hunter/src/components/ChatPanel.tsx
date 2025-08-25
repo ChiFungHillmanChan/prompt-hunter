@@ -164,6 +164,22 @@ Example "Not related" responses: random characters, unrelated topics, nonsense t
     );
   }
 
+  // Handle healer role - show only assistant message, no input/chat
+  if (role.id === 'healer') {
+    return (
+      <div className="p-3 bg-white/5 border border-white/10 rounded text-sm space-y-2">
+        <div className="font-semibold">{t('geminiChat')}</div>
+        
+        {/* Show initial assistant message */}
+        {phase.assistant && (
+          <div className="bg-blue-500/20 border border-blue-500/30 p-2 rounded text-xs">
+            <div className="text-white">{phase.assistant}</div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="p-3 bg-white/5 border border-white/10 rounded text-sm space-y-2">
       <div className="font-semibold">{t('geminiChat')}</div>

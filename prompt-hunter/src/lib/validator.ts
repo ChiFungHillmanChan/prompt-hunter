@@ -141,38 +141,6 @@ export async function validateAnswer(
   }
 }
 
-function calculateLevenshteinDistance(str1: string, str2: string): number {
-  const len1 = str1.length;
-  const len2 = str2.length;
-  
-  // Create a 2D array for dynamic programming
-  const dp: number[][] = Array(len1 + 1).fill(null).map(() => Array(len2 + 1).fill(0));
-  
-  // Initialize base cases
-  for (let i = 0; i <= len1; i++) {
-    dp[i][0] = i;
-  }
-  for (let j = 0; j <= len2; j++) {
-    dp[0][j] = j;
-  }
-  
-  // Fill the DP table
-  for (let i = 1; i <= len1; i++) {
-    for (let j = 1; j <= len2; j++) {
-      if (str1[i - 1] === str2[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1]; // No operation needed
-      } else {
-        dp[i][j] = 1 + Math.min(
-          dp[i - 1][j],     // Deletion
-          dp[i][j - 1],     // Insertion
-          dp[i - 1][j - 1]  // Substitution
-        );
-      }
-    }
-  }
-  
-  return dp[len1][len2];
-}
 
 // Store state for healer sentences
 const healerSentenceState: { 
@@ -189,6 +157,25 @@ export function clearHealerTargetSentence(phaseNumber: number, taskType: string)
   if (healerSentenceState[phaseKey]) {
     healerSentenceState[phaseKey].currentSentenceIndex++;
   }
+}
+
+// Function to reset healer sentence state for a specific phase (for restart/death)
+export function resetHealerSentenceState(phaseNumber: number, taskType: string) {
+  const phaseKey = `${phaseNumber}-${taskType}`;
+  if (healerSentenceState[phaseKey]) {
+    healerSentenceState[phaseKey] = {
+      currentSentenceIndex: 0,
+      availableSentences: (healerSentenceState[phaseKey].availableSentences || []).slice(0, 10),
+      isUsingPremade: true
+    };
+  }
+}
+
+// Function to completely clear all healer sentence state (for full reset)
+export function clearAllHealerSentenceState() {
+  Object.keys(healerSentenceState).forEach(key => {
+    delete healerSentenceState[key];
+  });
 }
 
 // Function to get AI-generated sentences when premade ones are exhausted
@@ -254,7 +241,7 @@ export function getNextHealerSentence(phase: Phase): { target_sentence?: string;
   if (!healerSentenceState[phaseKey]) {
     healerSentenceState[phaseKey] = {
       currentSentenceIndex: 0,
-      availableSentences: [...sentences], // copy array
+      availableSentences: sentences.slice(0, 10), // Take only first 10 sentences
       isUsingPremade: true
     };
   }
@@ -262,7 +249,7 @@ export function getNextHealerSentence(phase: Phase): { target_sentence?: string;
   const state = healerSentenceState[phaseKey];
   
   // Check if we've exhausted premade sentences and need to generate new ones
-  if (state.isUsingPremade && state.currentSentenceIndex >= sentences.length) {
+  if (state.isUsingPremade && state.currentSentenceIndex >= state.availableSentences.length) {
     // Return null to indicate we need AI generation
     return null;
   }
@@ -283,6 +270,20 @@ export function getNextHealerSentence(phase: Phase): { target_sentence?: string;
   };
 }
 
+// Function to count character mismatches between two strings
+function countStringMismatches(str1: string, str2: string): number {
+  const maxLength = Math.max(str1.length, str2.length);
+  let mismatches = 0;
+  
+  for (let i = 0; i < maxLength; i++) {
+    if (i >= str1.length || i >= str2.length || str1[i] !== str2[i]) {
+      mismatches++;
+    }
+  }
+  
+  return mismatches;
+}
+
 async function handleHealExactCopyFromSentences(userText: string, phase: Phase): Promise<{ ok: boolean; message: string; score?: number; error_count?: number; target_sentence?: string; sentences_remaining?: number }> {
   
   const sentences = phase.sentences || [];
@@ -297,7 +298,7 @@ async function handleHealExactCopyFromSentences(userText: string, phase: Phase):
   if (!healerSentenceState[phaseKey]) {
     healerSentenceState[phaseKey] = {
       currentSentenceIndex: 0,
-      availableSentences: [...sentences], // copy array
+      availableSentences: sentences.slice(0, 10), // Take only first 10 sentences
       isUsingPremade: true
     };
   }
@@ -305,7 +306,7 @@ async function handleHealExactCopyFromSentences(userText: string, phase: Phase):
   const state = healerSentenceState[phaseKey];
   
   // Check if we've exhausted premade sentences and need to generate new ones
-  if (state.isUsingPremade && state.currentSentenceIndex >= sentences.length) {
+  if (state.isUsingPremade && state.currentSentenceIndex >= state.availableSentences.length) {
     // Switch to AI-generated sentences
     try {
       const aiSentences = await generateAISentences(phase);
@@ -316,7 +317,7 @@ async function handleHealExactCopyFromSentences(userText: string, phase: Phase):
       // If AI generation fails, return error
       return { 
         ok: false, 
-        message: 'No more sentences available. Please request new ones.', 
+        message: 'No more sentences available. get new sentence.', 
         score: 0, 
         target_sentence: '', 
         sentences_remaining: 0 
@@ -326,11 +327,11 @@ async function handleHealExactCopyFromSentences(userText: string, phase: Phase):
   
   const sentencesRemaining = Math.max(0, state.availableSentences.length - state.currentSentenceIndex);
   
-  // Check if no more sentences available (this shouldn't happen with AI generation, but safety check)
+  // Check if no more sentences available
   if (state.currentSentenceIndex >= state.availableSentences.length) {
     return { 
       ok: false, 
-      message: 'No more sentences available', 
+      message: 'No more questions. get new sentence.', 
       score: 0, 
       target_sentence: '', 
       sentences_remaining: 0 
@@ -339,12 +340,12 @@ async function handleHealExactCopyFromSentences(userText: string, phase: Phase):
   
   const targetSentence = state.availableSentences[state.currentSentenceIndex];
   
-  // Calculate exact match and error count
+  // Use simple string comparison algorithm instead of AI checking
   const isExactMatch = userText === targetSentence;
-  const errorCount = calculateLevenshteinDistance(userText, targetSentence);
+  const errorCount = countStringMismatches(userText, targetSentence);
   
   if (isExactMatch) {
-    // Move to next sentence
+    // Move to next sentence only when correct
     state.currentSentenceIndex++;
     
     return { 
@@ -356,9 +357,10 @@ async function handleHealExactCopyFromSentences(userText: string, phase: Phase):
       sentences_remaining: sentencesRemaining - 1
     };
   } else {
+    // Stay on same sentence when incorrect
     return { 
       ok: false, 
-      message: '0', 
+      message: errorCount.toString(), 
       score: 0, 
       error_count: errorCount, 
       target_sentence: targetSentence,

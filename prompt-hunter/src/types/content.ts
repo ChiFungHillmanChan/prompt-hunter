@@ -42,9 +42,10 @@ export interface Role {
   id: string;
   name: string;
   difficulty: 'easy' | 'medium' | 'hard' | 'impossible';
+  phases_per_run?: number;
   description?: string;
   phases: Phase[];
-  secretWinningInputs?: string[]; // for Mysterious
+  secretWinningInputs?: string[];
 }
 
 export interface ContentPack {

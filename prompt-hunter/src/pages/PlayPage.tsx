@@ -149,6 +149,17 @@ export default function PlayPage() {
     }
     const monsterHP = 100; // default per stage
     session.resetForRole(role.id, characterStats.health, monsterHP);
+    
+    // Reset healer sentence state when starting fresh
+    if (role.id === 'healer') {
+      try {
+        import('../lib/validator').then(({ clearAllHealerSentenceState }) => {
+          clearAllHealerSentenceState();
+        });
+      } catch {
+        // Failed to reset healer state
+      }
+    }
   }, [role?.id, characterStats?.health]);
 
   // Attack countdown and damage effects
@@ -231,7 +242,7 @@ export default function PlayPage() {
         // For healer, special attack logic: both healer and monster take damage when time runs out
         if (role.id === 'healer' && next <= 0) {
           const healerDamage = settings.monsterDamagePerTick;
-          const monsterDamage = 3; // Monster self-damage
+          const monsterDamage = 2; // Monster self-damage
           
           const newPlayerHP = Math.max(0, s.playerHP - healerDamage);
           const newMonsterHP = Math.max(0, s.monsterHP - monsterDamage);
@@ -253,8 +264,15 @@ export default function PlayPage() {
           
           // Check if healer died
           if (newPlayerHP <= 0) {
-            setTimeout(() => {
-              try { if (role) localStorage.removeItem(`ph-progress-${role.id}`); } catch {
+            setTimeout(async () => {
+              try { 
+                if (role) {
+                  localStorage.removeItem(`ph-progress-${role.id}`);
+                  // Reset healer sentence state
+                  const { clearAllHealerSentenceState } = await import('../lib/validator');
+                  clearAllHealerSentenceState();
+                }
+              } catch {
                 // Failed to remove saved progress
               }
               // Force a page reload to return to main menu
@@ -395,7 +413,7 @@ export default function PlayPage() {
                 />
                 {showMonsterDamage && (
                   <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 text-yellow-400 font-bold animate-bounce">
-                    -{characterStats.attack}
+                    -{role.id === 'healer' ? '2' : characterStats.attack}
                   </div>
                 )}
               </div>
@@ -456,9 +474,12 @@ export default function PlayPage() {
                       
                       // Check if healer died
                       if (newPlayerHP <= 0) {
-                        setTimeout(() => {
+                        setTimeout(async () => {
                           try {
                             localStorage.removeItem(`ph-progress-${role.id}`);
+                            // Reset healer sentence state
+                            const { clearAllHealerSentenceState } = await import('../lib/validator');
+                            clearAllHealerSentenceState();
                           } catch {
                             // Failed to remove saved progress
                           }
@@ -557,8 +578,8 @@ export default function PlayPage() {
                       const errorCount = validationResult?.error_count || 0;
                       
                       if (score >= 100) {
-                        // Perfect copy: heal 20 HP (capped at 30) and monster takes 5 damage
-                        const healAmount = Math.min(20, 30 - session.playerHP);
+                        // Perfect copy: heal 3 HP (capped at 30) and monster takes 5 damage
+                        const healAmount = Math.min(3, 30 - session.playerHP);
                         const newPlayerHP = Math.min(30, session.playerHP + healAmount);
                         const newMonsterHP = Math.max(0, session.monsterHP - 5);
                         
@@ -594,7 +615,7 @@ export default function PlayPage() {
                         }
                       } else {
                         // Imperfect copy: heal reduced by error count, no monster damage
-                        const baseHeal = 20;
+                        const baseHeal = 3;
                         const actualHeal = Math.max(0, baseHeal - errorCount);
                         const healAmount = Math.min(actualHeal, 30 - session.playerHP);
                         const newPlayerHP = Math.min(30, session.playerHP + healAmount);

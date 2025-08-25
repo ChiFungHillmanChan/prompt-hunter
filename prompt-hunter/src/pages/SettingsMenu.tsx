@@ -79,7 +79,7 @@ export default function SettingsMenu() {
     setShowRestartConfirmation(character);
   };
 
-  const onConfirmRestart = () => {
+  const onConfirmRestart = async () => {
     if (showRestartConfirmation) {
       if (showRestartConfirmation.id === 'detective') {
         // Detective-specific restart: preserve completed questions, reset session only
@@ -114,6 +114,16 @@ export default function SettingsMenu() {
           localStorage.removeItem(`ph-progress-${showRestartConfirmation.id}`);
         } catch {
           // Failed to remove character progress
+        }
+        
+        // Reset healer sentence state if restarting healer
+        if (showRestartConfirmation.id === 'healer') {
+          try {
+            const { clearAllHealerSentenceState } = await import('../lib/validator');
+            clearAllHealerSentenceState();
+          } catch {
+            // Failed to reset healer sentence state
+          }
         }
         
         // Reset completed role in progress store
@@ -350,7 +360,7 @@ export default function SettingsMenu() {
                         
                         <div className="flex items-center justify-between">
                           <div className="text-xs text-slate-400">
-                            {r.id === 'detective' ? '1' : (pack?.meta.phases_per_run || 5)} {t('challenges')}
+                            {r.phases_per_run} {t('challenges')}
                           </div>
                           <div className="flex items-center gap-2">
                             {(r as any).feature === 'new' && (

@@ -161,6 +161,18 @@ export const translations = {
     detectiveModeDesc: "AI will only respond: Yes / No / Not related",
     caseClose: "Case Close",
     detectiveDamageRule: "You only take damage from 'No' or 'Not related' answers",
+    
+    // Healer Mode
+    copySentenceExactly: "Copy the sentence exactly, including spaces and punctuation.",
+    sentencesRemaining: "sentences remaining",
+    typeSentenceExactly: "Type the sentence exactly as shown above...",
+    submitCopy: "Submit",
+    getNewSentences: "Get New Sentences (-3 HP)",
+    checking: "Checking...",
+    getting: "Getting...",
+    cheaterDetected: "CHEATER DETECTED!",
+    monsterKnowsCopyPaste: "Don't you think the monster knows you can copy and paste? You cannot move in",
+    secondsLabel: "seconds",
   },
   'zh-hk': {
     // App title and tagline  
@@ -232,7 +244,7 @@ export const translations = {
     sending: "發送中…",
     send: "發送",
     enterApiKey: "輸入 Gemini API 密鑰",
-    apiKeyRequired: "每個會話需要輸入一次。為咗安全起見，請喺 Google AI Studio 中限制密鑰到 HTTP 引用者。",
+    apiKeyRequired: "進入遊戲前需要輸入一次。為咗安全起見，請喺 Google AI Studio 中限制密鑰到 HTTP 引用者。本遊戲不會獲取你的 API 密鑰。",
     continue: "繼續",
     
     // Character specialties
@@ -323,6 +335,18 @@ export const translations = {
     detectiveModeDesc: "AI 只會回答：係 / 唔係 / 無關",
     caseClose: "識破案件",
     detectiveDamageRule: "只有收到「唔係」或「無關」答案先會受傷",
+    
+    // Healer Mode
+    copySentenceExactly: "準確打出整個問題，連同空間、標點符號。",
+    sentencesRemaining: "句剩餘",
+    typeSentenceExactly: "準確咁輸入上面嘅句子...",
+    submitCopy: "提交複製",
+    getNewSentences: "獲取新句子 (-3 生命值)",
+    checking: "檢查中...",
+    getting: "獲取中...",
+    cheaterDetected: "偵測到作弊者！",
+    monsterKnowsCopyPaste: "你覺得隻怪物唔知道你可以複製同貼上咩？你喺",
+    secondsLabel: "秒內唔可以郁動",
   }
 } as const;
 export type Language = keyof typeof translations;

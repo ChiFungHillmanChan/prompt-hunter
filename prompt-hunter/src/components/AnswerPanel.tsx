@@ -19,10 +19,52 @@ export default function AnswerPanel({ phase, onScore, roleId, onRequestNewSenten
   const [msg, setMsg] = React.useState<string | null>(null);
   const [targetSentence, setTargetSentence] = React.useState<string | null>(null);
   const [validationResult, setValidationResult] = React.useState<any>(null);
+  const [isFrozen, setIsFrozen] = React.useState(false);
+  const [freezeTimeLeft, setFreezeTimeLeft] = React.useState(0);
+  const [showScaryModal, setShowScaryModal] = React.useState(false);
 
   const taskType = (phase.task_type || '').toLowerCase();
   const isBard = taskType.includes('song') || phase.validator?.type === 'song_guess';
   const isHealer = roleId === 'healer';
+
+  // Freeze timer effect
+  React.useEffect(() => {
+    if (isFrozen && freezeTimeLeft > 0) {
+      const timer = setTimeout(() => {
+        setFreezeTimeLeft(freezeTimeLeft - 1);
+        if (freezeTimeLeft <= 1) {
+          setIsFrozen(false);
+          setShowScaryModal(false);
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isFrozen, freezeTimeLeft]);
+
+  // Function to trigger scary freeze
+  const triggerScaryFreeze = () => {
+    setIsFrozen(true);
+    setFreezeTimeLeft(10);
+    setShowScaryModal(true);
+  };
+
+  // Copy detection handler
+  const handleCopy = React.useCallback(() => {
+    if (isHealer) {
+      triggerScaryFreeze();
+    }
+  }, [isHealer]);
+
+  // Paste detection handler
+  const handlePaste = React.useCallback((e: React.ClipboardEvent) => {
+    if (isHealer && targetSentence) {
+      const pastedText = e.clipboardData.getData('text');
+      if (pastedText === targetSentence) {
+        e.preventDefault();
+        triggerScaryFreeze();
+      }
+    }
+  }, [isHealer, targetSentence]);
 
   // Auto-get first sentence for healer
   React.useEffect(() => {
@@ -66,7 +108,7 @@ export default function AnswerPanel({ phase, onScore, roleId, onRequestNewSenten
         if (remaining > 0) {
           displayMessage = `Perfect! Moving to next sentence... (${remaining} remaining)`;
         } else {
-          displayMessage = 'Perfect! No more sentences available. Request new ones to continue.';
+          displayMessage = 'No more questions. get new sentence.';
         }
       }
       
@@ -78,27 +120,41 @@ export default function AnswerPanel({ phase, onScore, roleId, onRequestNewSenten
         setTargetSentence((res as any).target_sentence);
       }
       
-      // For Healer with perfect score, automatically get the next sentence
-      if (roleId === 'healer' && score >= 100) {
-        // Clear the current text and get the next sentence
+      // For Healer, automatically get the next sentence regardless of score
+      if (roleId === 'healer') {
+        // Clear the current text immediately
         setText('');
-        // Get the next sentence directly
-        setTimeout(async () => {
-          try {
-            const { getNextHealerSentence } = await import('../lib/validator');
-            const nextSentenceData = getNextHealerSentence(phase);
-            if (nextSentenceData?.target_sentence) {
-              setTargetSentence(nextSentenceData.target_sentence);
-              setValidationResult({
-                ...res,
-                target_sentence: nextSentenceData.target_sentence,
-                sentences_remaining: nextSentenceData.sentences_remaining
-              });
+        
+        // Check if there are more questions remaining
+        const remaining = (res as any).sentences_remaining;
+        if (remaining > 0) {
+          // Automatically get the next sentence after a short delay
+          setTimeout(async () => {
+            try {
+              const { getNextHealerSentence } = await import('../lib/validator');
+              const nextSentenceData = getNextHealerSentence(phase);
+              if (nextSentenceData?.target_sentence) {
+                setTargetSentence(nextSentenceData.target_sentence);
+                setValidationResult({
+                  ...res,
+                  target_sentence: nextSentenceData.target_sentence,
+                  sentences_remaining: nextSentenceData.sentences_remaining
+                });
+              }
+            } catch (error) {
+              console.error('Failed to get next sentence:', error);
             }
-          } catch (error) {
-            console.error('Failed to get next sentence:', error);
-          }
-        }, 500); // Small delay to show the success message first
+          }, 1000); // 1 second delay to show message
+        } else {
+          // No more questions - clear the target sentence to show the get new sentence button
+          setTimeout(() => {
+            setTargetSentence(null);
+            setValidationResult({
+              ...res,
+              sentences_remaining: 0
+            });
+          }, 1500); // Slightly longer delay to show the "no more questions" message
+        }
       }
       
       // Always call onScore to return the score (number or 0)
@@ -110,15 +166,19 @@ export default function AnswerPanel({ phase, onScore, roleId, onRequestNewSenten
 
   return (
     <div className="p-3 bg-white/5 border border-white/10 rounded text-sm space-y-2">
-      <div className="font-semibold">{isHealer ? 'Copy This Sentence Exactly:' : t('yourAnswer')}</div>
+      <div className="font-semibold">{isHealer ? t('copySentenceExactly') : t('yourAnswer')}</div>
       {isHealer && targetSentence && (
         <div className="p-3 bg-green-900/20 border border-green-500/30 rounded-lg">
-          <div className="text-green-300 font-mono text-base">
-            "{targetSentence}"
+          <div 
+            className="text-green-300 font-mono text-base select-none"
+            onCopy={handleCopy}
+            style={{ userSelect: 'none' }}
+          >
+            {targetSentence}
           </div>
           <div className="text-green-400 text-xs mt-1">
             {validationResult?.sentences_remaining !== undefined && validationResult.sentences_remaining > 0 
-              ? `${validationResult.sentences_remaining} sentences remaining`
+              ? `${validationResult.sentences_remaining} ${t('sentencesRemaining')}`
               : 'AI-generated sentence'
             }
             {validationResult?.isUsingPremade !== undefined && (
@@ -133,7 +193,7 @@ export default function AnswerPanel({ phase, onScore, roleId, onRequestNewSenten
         <div className="p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg">
           <div className="text-blue-300">
             {validationResult?.sentences_remaining === 0 
-              ? 'No more sentences available. Click "Get New Sentence" to generate new ones with AI (-3 HP).'
+              ? 'No more questions. get new sentence.'
               : 'Click "Get Sentence" to receive a sentence to copy. Copy it exactly to heal and damage the monster!'
             }
           </div>
@@ -160,35 +220,35 @@ export default function AnswerPanel({ phase, onScore, roleId, onRequestNewSenten
             rows={3}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className="w-full px-2 py-2 bg-black/40 rounded border border-white/10"
-            placeholder="Type the sentence exactly as shown above..."
+            onPaste={handlePaste}
+            disabled={isFrozen}
+            className="w-full px-2 py-2 bg-black/40 rounded border border-white/10 disabled:opacity-50"
+            placeholder={t('typeSentenceExactly')}
           />
           <div className="flex gap-2">
-            <button
-              onClick={() => {
-                // Trigger getting a new sentence - this should penalize the player
-                if (onRequestNewSentence) {
-                  onRequestNewSentence();
-                }
-                setTargetSentence(null); // Clear current sentence to trigger new generation
-                setValidationResult(null); // Clear validation result
-                setText(''); // Clear the input text
-              }}
-              disabled={loading}
-              className="px-3 py-2 rounded bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-sm"
-            >
-              {loading ? 'Getting...' : 
-                validationResult?.sentences_remaining === 0 
-                  ? 'Generate AI Sentences (-3 HP)' 
-                  : 'Get New Sentence (-3 HP)'
-              }
-            </button>
+            {validationResult?.sentences_remaining === 0 && (
+              <button
+                onClick={() => {
+                  // Trigger getting a new sentence - this should penalize the player
+                  if (onRequestNewSentence) {
+                    onRequestNewSentence();
+                  }
+                  setTargetSentence(null); // Clear current sentence to trigger new generation
+                  setValidationResult(null); // Clear validation result
+                  setText(''); // Clear the input text
+                }}
+                disabled={loading || isFrozen}
+                className="px-3 py-2 rounded bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-sm"
+              >
+                {loading ? t('getting') : t('getNewSentences')}
+              </button>
+            )}
             <button
               onClick={onValidate}
-              disabled={loading || !targetSentence}
+              disabled={loading || !targetSentence || isFrozen}
               className="px-3 py-2 rounded bg-green-600 hover:bg-green-700 disabled:opacity-50 text-sm"
             >
-              {loading ? 'Checking...' : 'Submit Copy'}
+              {loading ? t('checking') : t('submitCopy')}
             </button>
           </div>
         </div>
@@ -211,6 +271,22 @@ export default function AnswerPanel({ phase, onScore, roleId, onRequestNewSenten
         </button>
       )}
       {msg && <div className="text-xs opacity-80">{msg}</div>}
+      
+      {/* Scary Modal for Copy/Paste Detection - Only for Healer */}
+      {isHealer && showScaryModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-red-900/90 border-2 border-red-500 rounded-xl p-8 max-w-md w-full text-center animate-pulse">
+            <div className="text-6xl mb-4 animate-bounce">💀</div>
+            <div className="text-red-300 text-xl font-bold mb-4">{t('cheaterDetected')}</div>
+            <div className="text-red-200 text-lg mb-6">
+              {t('monsterKnowsCopyPaste')} {freezeTimeLeft} {t('secondsLabel')}
+            </div>
+            <div className="text-red-400 text-6xl font-bold animate-ping">
+              {freezeTimeLeft}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

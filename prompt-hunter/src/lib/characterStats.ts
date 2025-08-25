@@ -17,7 +17,7 @@ export function getCharacterStats(roleId: string) {
     case 'detective':
       return { health: 30, attack: 20, specialtyKey: 'detectiveMysteries' as const };
     case 'healer':
-      return { health: 30, attack: 0, heal: 20, specialtyKey: 'healingArts' as const };
+      return { health: 30, attack: 0, heal: 3, specialtyKey: 'healingArts' as const };
     case 'mysterious':
       return { health: 100000000, attack: 100000000, specialtyKey: 'unknownPowers' as const };
     default:
