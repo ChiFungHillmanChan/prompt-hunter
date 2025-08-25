@@ -173,6 +173,16 @@ export const translations = {
     cheaterDetected: "CHEATER DETECTED!",
     monsterKnowsCopyPaste: "Don't you think the monster knows you can copy and paste? You cannot move in",
     secondsLabel: "seconds",
+    
+    // About Creator
+    aboutCreator: "About Creator",
+    creatorName: "Hillman Chan",
+    creatorDescription: "Game developer passionate about AI-powered gaming experiences",
+    personalWebsite: "Personal Website",
+    leaveReview: "Leave Review",
+    donateToCreator: "Donate to Creator",
+    comingSoon: "Coming Soon",
+    thanksForPlaying: "Thank you for playing Prompt Hunter! Your feedback helps improve the game.",
   },
   'zh-hk': {
     // App title and tagline  
@@ -347,6 +357,16 @@ export const translations = {
     cheaterDetected: "偵測到作弊者！",
     monsterKnowsCopyPaste: "你覺得隻怪物唔知道你可以複製同貼上咩？你喺",
     secondsLabel: "秒內唔可以郁動",
+    
+    // About Creator
+    aboutCreator: "關於開發者",
+    creatorName: "Hillman Chan",
+    creatorDescription: "熱衷於 AI 遊戲體驗嘅遊戲開發者",
+    personalWebsite: "個人網站",
+    leaveReview: "留下評價",
+    donateToCreator: "打賞開發者",
+    comingSoon: "即將推出",
+    thanksForPlaying: "多謝你玩指令獵人！你嘅反饋有助改善遊戲。",
   }
 } as const;
 export type Language = keyof typeof translations;
