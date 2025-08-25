@@ -11,6 +11,12 @@ type Props = {
   onDetectiveDamage?: () => void;
 };
 
+type ChatMessage = {
+  type: 'user' | 'ai';
+  message: string;
+  timestamp: number;
+};
+
 export default function ChatPanel({ role, phase, onDetectiveDamage }: Props) {
   const { t, language } = useTranslation();
   const [apiKey] = React.useState<string>(() => sessionStorage.getItem('gemini_api_key') || '');
@@ -19,6 +25,29 @@ export default function ChatPanel({ role, phase, onDetectiveDamage }: Props) {
   // removed usage tracking UI
   const [loading, setLoading] = React.useState(false);
   const toast = useToast();
+  
+  // Chat history for Detective mode
+  const [chatHistory, setChatHistory] = React.useState<ChatMessage[]>(() => {
+    if (role.id === 'detective') {
+      try {
+        const saved = localStorage.getItem(`ph-detective-chat-${role.id}`);
+        return saved ? JSON.parse(saved) : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+
+  // Function to clear chat history (for Detective restarts)
+  const clearChatHistory = () => {
+    setChatHistory([]);
+    try {
+      localStorage.removeItem(`ph-detective-chat-${role.id}`);
+    } catch {
+      // Failed to clear chat history
+    }
+  };
 
   const onCopyContext = () => {
     const ctx = buildContext(role, phase, language);
@@ -30,8 +59,19 @@ export default function ChatPanel({ role, phase, onDetectiveDamage }: Props) {
       setResp('????????????????????');
       return;
     }
-    if (!apiKey || loading) return;
+    if (!apiKey || loading || !prompt.trim()) return;
     setLoading(true);
+    
+    // Add user message to chat history for Detective
+    if (role.id === 'detective') {
+      const userMessage: ChatMessage = {
+        type: 'user',
+        message: prompt.trim(),
+        timestamp: Date.now()
+      };
+      setChatHistory(prev => [...prev, userMessage]);
+    }
+    
     try {
       let ctx = buildContext(role, phase, language) + '\n\n=== IMPORTANT: USER\'S ACTUAL QUESTION (analyze this specific code/question, ignore phase context if it doesn\'t match) ===\n' + prompt + '\n=== END USER QUESTION ===';
       
@@ -44,12 +84,21 @@ IMPORTANT RULES:
 - Only answer "Yes" if the question is clearly TRUE about the story context provided above
 - Answer "No" if the question is clearly FALSE about the story context
 - Answer "Not related" if:
-  * The question is gibberish, random text, or meaningless
+  * The question is gibberish, random text, or meaningless (like single characters: "?", "a", "1", etc.)
   * The question is about something completely unrelated to the story
   * The question cannot be understood or parsed
   * The question is not a proper yes/no question about the story
+  * The question is just punctuation marks or symbols
+  * The question is incomplete or doesn't make sense
 
-Example "Not related" responses: random characters, unrelated topics, nonsense text, incomplete sentences.`;
+STRICT EXAMPLES of "Not related":
+- Single characters: "?", "a", "x", "1", "!", etc.
+- Random text: "asdf", "test", "hello", "real"  
+- Punctuation only: "???", "!!!", "..."
+- Incomplete sentences that don't ask about the story
+- Any input that is not a clear question about the detective story context
+
+BE VERY STRICT: If the input doesn't clearly ask about something specific in the detective story, respond with "Not related".`;
       }
       
       const res = await callGemini(apiKey, ctx);
@@ -117,6 +166,26 @@ Example "Not related" responses: random characters, unrelated topics, nonsense t
       }
       
       setResp(text);
+      
+      // Add AI response to chat history for Detective and save to localStorage
+      if (role.id === 'detective') {
+        const aiMessage: ChatMessage = {
+          type: 'ai',
+          message: text,
+          timestamp: Date.now()
+        };
+        setChatHistory(prev => {
+          const newHistory = [...prev, aiMessage];
+          try {
+            localStorage.setItem(`ph-detective-chat-${role.id}`, JSON.stringify(newHistory));
+          } catch {
+            // Failed to save chat history
+          }
+          return newHistory;
+        });
+        setPrompt(''); // Clear prompt for Detective after sending
+      }
+      
       // usage tracking removed from UI
     } catch (err) {
       if (err instanceof GeminiError) {
@@ -208,6 +277,9 @@ Example "Not related" responses: random characters, unrelated topics, nonsense t
           href="https://aistudio.google.com/prompts/new_chat"
           target="_blank" rel="noreferrer"
         >{t('openGemini')}</a>
+        {role.id === 'detective' && chatHistory.length > 0 && (
+          <button className="px-2 py-1 text-xs bg-red-600 rounded" onClick={clearChatHistory}>Clear History</button>
+        )}
       </div>
       <textarea
         rows={3}
@@ -221,6 +293,29 @@ Example "Not related" responses: random characters, unrelated topics, nonsense t
       </button>
       {resp && (
         <pre className="bg-black/40 border border-white/10 p-2 rounded overflow-x-auto text-xs max-h-40 whitespace-pre-wrap">{resp}</pre>
+      )}
+      
+      {/* Detective Chat History */}
+      {role.id === 'detective' && chatHistory.length > 0 && (
+        <div className="mt-4 pt-3 border-t border-white/10">
+          <div className="text-xs font-semibold text-slate-300 mb-2">{t('questionHistory')}</div>
+          <div className="space-y-2 max-h-60 overflow-y-auto bg-black/20 rounded p-2">
+            {chatHistory.map((msg, index) => (
+              <div key={index} className={`text-xs p-2 rounded ${
+                msg.type === 'user' 
+                  ? 'bg-slate-700/50 border border-slate-600/30' 
+                  : 'bg-blue-500/20 border border-blue-500/30'
+              }`}>
+                <div className={`font-semibold mb-1 ${
+                  msg.type === 'user' ? 'text-slate-300' : 'text-blue-300'
+                }`}>
+                  {msg.type === 'user' ? t('userQuestion') : t('aiAnswer')}
+                </div>
+                <div className="text-white">{msg.message}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

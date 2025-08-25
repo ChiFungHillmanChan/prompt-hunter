@@ -8,7 +8,6 @@ import { useTranslation } from '../hooks/useTranslation';
 import React from 'react';
 
 import { getCharacterStats } from '../lib/characterStats';
-import { selectDetectiveQuestions } from '../store/session';
 import HowToPlay from '../components/HowToPlay';
 import { pickCharacterSprite as pickSprite } from '../lib/characterStats';
 
@@ -69,8 +68,20 @@ export default function SettingsMenu() {
     
     // Check if character has stage progress in localStorage
     try {
-      const raw = localStorage.getItem(`ph-progress-${characterId}`);
-      return raw !== null && raw !== undefined;
+      if (characterId === 'detective') {
+        const raw = localStorage.getItem(`ph-detective-${characterId}`);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          const characterStats = getCharacterStats(characterId);
+          const savedHP = saved.playerHP || characterStats.health;
+          // Show restart if detective HP is not full or has any progress
+          return savedHP < characterStats.health || raw !== null;
+        }
+        return false;
+      } else {
+        const raw = localStorage.getItem(`ph-progress-${characterId}`);
+        return raw !== null && raw !== undefined;
+      }
     } catch {
       return false;
     }
@@ -82,54 +93,41 @@ export default function SettingsMenu() {
 
   const onConfirmRestart = async () => {
     if (showRestartConfirmation) {
-      if (showRestartConfirmation.id === 'detective') {
-        // Detective-specific restart: preserve completed questions, reset session only
-        try {
+      // All characters now use same restart logic: clear all progress
+      try {
+        if (showRestartConfirmation.id === 'detective') {
+          // For Detective: preserve question but reset HP and clear chat
           const key = `ph-detective-${showRestartConfirmation.id}`;
           const raw = localStorage.getItem(key);
           if (raw) {
             const saved = JSON.parse(raw);
-            const completedQuestions = saved.completedQuestions || [];
-            
-            // Get detective role from current pack to determine total questions
-            const detectiveRole = pack?.roles?.find((role: any) => role.id === 'detective');
-            const totalQuestions = detectiveRole?.phases?.length || 5;
-            
-            const newQuestions = selectDetectiveQuestions(totalQuestions, completedQuestions);
-            
-            // Reset session state but keep completed questions
+            const characterStats = getCharacterStats(showRestartConfirmation.id);
+            // Keep the same question (phaseIndex) but reset HP
             localStorage.setItem(key, JSON.stringify({
-              completedQuestions: completedQuestions, // Keep completed questions
-              currentQuestions: newQuestions,
-              questionIndex: 0,
-              playerHP: 30, // Full HP for detective
+              phaseIndex: saved.phaseIndex || 0,
+              playerHP: characterStats.health,
             }));
           }
-        } catch {
-          // Failed to update detective progress, fallback to full reset
-          localStorage.removeItem(`ph-detective-${showRestartConfirmation.id}`);
-        }
-      } else {
-        // Normal character restart: clear all progress
-        try {
+          localStorage.removeItem(`ph-detective-chat-${showRestartConfirmation.id}`); // Clear chat history
+        } else {
           localStorage.removeItem(`ph-progress-${showRestartConfirmation.id}`);
-        } catch {
-          // Failed to remove character progress
         }
-        
-        // Reset healer sentence state if restarting healer
-        if (showRestartConfirmation.id === 'healer') {
-          try {
-            const { clearAllHealerSentenceState } = await import('../lib/validator');
-            clearAllHealerSentenceState();
-          } catch {
-            // Failed to reset healer sentence state
-          }
-        }
-        
-        // Reset completed role in progress store
-        useProgress.getState().resetRole(showRestartConfirmation.id);
+      } catch {
+        // Failed to remove character progress
       }
+      
+      // Reset healer sentence state if restarting healer
+      if (showRestartConfirmation.id === 'healer') {
+        try {
+          const { clearAllHealerSentenceState } = await import('../lib/validator');
+          clearAllHealerSentenceState();
+        } catch {
+          // Failed to reset healer sentence state
+        }
+      }
+      
+      // Reset completed role in progress store
+      useProgress.getState().resetRole(showRestartConfirmation.id);
       
       // Close modals
       setSelectedCharacter(null);
@@ -142,6 +140,24 @@ export default function SettingsMenu() {
 
   const onCancelRestart = () => {
     setShowRestartConfirmation(null);
+  };
+
+  // Function to map difficulty values to translation keys
+  const getDifficultyKey = (difficulty: string): keyof typeof import('../lib/translations').translations.en => {
+    // Map Chinese difficulty values to English keys
+    const difficultyMap: { [key: string]: keyof typeof import('../lib/translations').translations.en } = {
+      '容易': 'easy',
+      '中等': 'medium', 
+      '困難': 'hard',
+      '不可能': 'impossible',
+      // English values (fallback)
+      'easy': 'easy',
+      'medium': 'medium',
+      'hard': 'hard', 
+      'impossible': 'impossible'
+    };
+    
+    return difficultyMap[difficulty] || 'medium';
   };
 
   // Handle escape key to close modals
@@ -436,7 +452,7 @@ export default function SettingsMenu() {
                 style={{ imageRendering: 'pixelated' }} 
               />
               <h2 className="text-2xl font-bold text-white mb-2">{selectedCharacter.name}</h2>
-              <p className="text-slate-400 text-sm mb-1 capitalize">{t(selectedCharacter.difficulty as keyof typeof import('../lib/translations').translations.en)} {t('difficulty')}</p>
+              <p className="text-slate-400 text-sm mb-1 capitalize">{t(getDifficultyKey(selectedCharacter.difficulty))} {t('difficulty')}</p>
               <p className="text-slate-300 text-sm leading-relaxed">{selectedCharacter.description || ''}</p>
             </div>
 

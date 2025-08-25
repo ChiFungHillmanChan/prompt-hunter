@@ -71,8 +71,20 @@ export default function PackViewer() {
     
     // Check if character has stage progress in localStorage
     try {
-      const raw = localStorage.getItem(`ph-progress-${characterId}`);
-      return raw !== null && raw !== undefined;
+      if (characterId === 'detective') {
+        const raw = localStorage.getItem(`ph-detective-${characterId}`);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          const characterStats = getCharacterStats(characterId);
+          const savedHP = saved.playerHP || characterStats.health;
+          // Show restart if detective HP is not full or has any progress
+          return savedHP < characterStats.health || raw !== null;
+        }
+        return false;
+      } else {
+        const raw = localStorage.getItem(`ph-progress-${characterId}`);
+        return raw !== null && raw !== undefined;
+      }
     } catch {
       return false;
     }
@@ -86,7 +98,23 @@ export default function PackViewer() {
     if (showRestartConfirmation) {
       // Clear character progress from localStorage
       try {
-        localStorage.removeItem(`ph-progress-${showRestartConfirmation.id}`);
+        if (showRestartConfirmation.id === 'detective') {
+          // For Detective: preserve question but reset HP and clear chat
+          const key = `ph-detective-${showRestartConfirmation.id}`;
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const saved = JSON.parse(raw);
+            const characterStats = getCharacterStats(showRestartConfirmation.id);
+            // Keep the same question (phaseIndex) but reset HP
+            localStorage.setItem(key, JSON.stringify({
+              phaseIndex: saved.phaseIndex || 0,
+              playerHP: characterStats.health,
+            }));
+          }
+          localStorage.removeItem(`ph-detective-chat-${showRestartConfirmation.id}`); // Clear chat history
+        } else {
+          localStorage.removeItem(`ph-progress-${showRestartConfirmation.id}`);
+        }
       } catch {
         // Failed to remove character progress
       }
@@ -114,6 +142,24 @@ export default function PackViewer() {
 
   const onCancelRestart = () => {
     setShowRestartConfirmation(null);
+  };
+
+  // Function to map difficulty values to translation keys
+  const getDifficultyKey = (difficulty: string): keyof typeof import('../lib/translations').translations.en => {
+    // Map Chinese difficulty values to English keys
+    const difficultyMap: { [key: string]: keyof typeof import('../lib/translations').translations.en } = {
+      '容易': 'easy',
+      '中等': 'medium', 
+      '困難': 'hard',
+      '不可能': 'impossible',
+      // English values (fallback)
+      'easy': 'easy',
+      'medium': 'medium',
+      'hard': 'hard', 
+      'impossible': 'impossible'
+    };
+    
+    return difficultyMap[difficulty] || 'medium';
   };
 
   // Handle escape key to close modal
@@ -213,7 +259,7 @@ export default function PackViewer() {
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-2xl font-bold text-white">{role.name}</h3>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getDifficultyColor(role.difficulty)}`}>
-                        {role.difficulty.charAt(0).toUpperCase() + role.difficulty.slice(1)}
+                        {t(getDifficultyKey(role.difficulty))}
                       </span>
                     </div>
                     

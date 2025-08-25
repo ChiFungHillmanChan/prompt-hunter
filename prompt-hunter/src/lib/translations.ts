@@ -161,6 +161,9 @@ export const translations = {
     detectiveModeDesc: "AI will only respond: Yes / No / Not related",
     caseClose: "Case Close",
     detectiveDamageRule: "You only take damage from 'No' or 'Not related' answers",
+    questionHistory: "Question History",
+    userQuestion: "User question:",
+    aiAnswer: "AI answer:",
     
     // Healer Mode
     copySentenceExactly: "Copy the sentence exactly, including spaces and punctuation.",
@@ -345,6 +348,9 @@ export const translations = {
     detectiveModeDesc: "AI 只會回答：係 / 唔係 / 無關",
     caseClose: "識破案件",
     detectiveDamageRule: "只有收到「唔係」或「無關」答案先會受傷",
+    questionHistory: "問題記錄",
+    userQuestion: "用戶問題：",
+    aiAnswer: "AI 回答：",
     
     // Healer Mode
     copySentenceExactly: "準確打出整個問題，連同空間、標點符號。",

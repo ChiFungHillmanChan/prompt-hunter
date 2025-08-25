@@ -60,7 +60,14 @@ export default function HowToPlay({ isOpen, onClose }: HowToPlayProps) {
             <h3 className="text-lg font-semibold text-white mb-2">{t('howToPlayStep1Title')}</h3>
             <p className="text-slate-300 text-sm leading-relaxed">{t('howToPlayStep1Desc')}</p>
             <div className="mt-3 text-xs text-blue-400">
-              💡 {t('getApiKey')}
+              💡 <a
+                      href="https://aistudio.google.com/app/apikey"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-400 hover:text-blue-300 underline transition-colors"
+                    >
+                      {t('getApiKey')}
+                    </a>
             </div>
           </div>
 

@@ -11,7 +11,7 @@ import TaskPanel from '../components/TaskPanel';
 import AnswerPanel from '../components/AnswerPanel';
 import ChatPanel from '../components/ChatPanel';
 import { getCharacterStats } from '../lib/characterStats';
-import { selectDetectiveQuestions } from '../store/session';
+import { selectDetectiveQuestion } from '../store/session';
 import { pickCharacterSprite } from '../lib/characterStats';
 
 export default function PlayPage() {
@@ -47,20 +47,22 @@ export default function PlayPage() {
       setTimeout(() => setShowPlayerDamage(false), 800);
       
       if (newHp <= 0) {
-        // Game over for detective - only reset current session, keep question progress
+        // Game over for detective - preserve question but reset HP and clear chat
         setTimeout(() => {
-          try {
+          try { 
             if (role) {
-              // Save detective progress but reset HP for restart
-              localStorage.setItem(
-                `ph-detective-${role.id}`,
-                JSON.stringify({
-                  completedQuestions: s.detectiveCompletedQuestions,
-                  currentQuestions: s.detectiveCurrentQuestions,
-                  questionIndex: 0, // Reset to first question in current set
-                  playerHP: characterStats?.health || 30, // Reset HP
-                })
-              );
+              // For Detective: preserve question but reset HP and clear chat
+              const key = `ph-detective-${role.id}`;
+              const raw = localStorage.getItem(key);
+              if (raw) {
+                const saved = JSON.parse(raw);
+                // Keep the same question (phaseIndex) but reset HP to full
+                localStorage.setItem(key, JSON.stringify({
+                  phaseIndex: saved.phaseIndex || 0,
+                  playerHP: characterStats?.health || 30,
+                }));
+              }
+              localStorage.removeItem(`ph-detective-chat-${role.id}`); // Clear chat history
             }
           } catch {
             // Failed to save progress
@@ -71,15 +73,13 @@ export default function PlayPage() {
         return { ...s, playerHP: 0, running: false };
       }
       
-      // Persist detective progress
+      // Persist detective progress - save current question and HP
       try {
         if (role) {
           localStorage.setItem(
             `ph-detective-${role.id}`,
             JSON.stringify({
-              completedQuestions: s.detectiveCompletedQuestions,
-              currentQuestions: s.detectiveCurrentQuestions,
-              questionIndex: s.detectiveQuestionIndex,
+              phaseIndex: s.phaseIndex,
               playerHP: newHp,
             })
           );
@@ -96,36 +96,53 @@ export default function PlayPage() {
     if (!role || !characterStats) return;
     
     if (role.id === 'detective') {
-      // Detective-specific initialization
+      // Detective-specific initialization - question locked until victory
       try {
         const key = `ph-detective-${role.id}`;
         const raw = localStorage.getItem(key);
         if (raw) {
+          // Load saved progress - always use saved question, regardless of HP
           const saved = JSON.parse(raw || '{}');
-          const completedQuestions = saved.completedQuestions || [];
-          const currentQuestions = saved.currentQuestions || selectDetectiveQuestions(role.phases.length, completedQuestions);
-          const questionIndex = Math.max(0, Math.min(Number(saved.questionIndex) || 0, currentQuestions.length - 1));
+          const savedPhaseIndex = Math.max(0, Math.min(Number(saved.phaseIndex) || 0, (role.phases.length || 1) - 1));
           const savedPlayerHP = Math.max(0, Math.min(characterStats.health, Number(saved.playerHP) || characterStats.health));
           
           session.resetForRole(role.id, savedPlayerHP, 100);
-          session.setDetectiveProgress(completedQuestions, currentQuestions, questionIndex);
-          useSession.setState({ phaseIndex: currentQuestions[questionIndex] || 0 });
+          useSession.setState({ phaseIndex: savedPhaseIndex });
           return;
         } else {
-          // First time playing detective - select random questions
-          const completedQuestions: number[] = [];
-          const currentQuestions = selectDetectiveQuestions(role.phases.length, completedQuestions);
+          // First time playing detective - select and save one random question
+          const randomPhase = selectDetectiveQuestion(role.phases.length);
+          
+          // Immediately save the selected question to lock it
+          try {
+            localStorage.setItem(key, JSON.stringify({
+              phaseIndex: randomPhase,
+              playerHP: characterStats.health,
+            }));
+          } catch {
+            // Failed to save initial question selection
+          }
+          
           session.resetForRole(role.id, characterStats.health, 100);
-          session.setDetectiveProgress(completedQuestions, currentQuestions, 0);
-          useSession.setState({ phaseIndex: currentQuestions[0] || 0 });
+          useSession.setState({ phaseIndex: randomPhase });
           return;
         }
       } catch {
-        // Failed to load detective progress - use defaults
-        const currentQuestions = selectDetectiveQuestions(role.phases.length, []);
+        // Failed to load detective progress - use defaults and save
+        const randomPhase = selectDetectiveQuestion(role.phases.length);
+        
+        // Try to save the selected question
+        try {
+          localStorage.setItem(`ph-detective-${role.id}`, JSON.stringify({
+            phaseIndex: randomPhase,
+            playerHP: characterStats.health,
+          }));
+        } catch {
+          // Failed to save question selection
+        }
+        
         session.resetForRole(role.id, characterStats.health, 100);
-        session.setDetectiveProgress([], currentQuestions, 0);
-        useSession.setState({ phaseIndex: currentQuestions[0] || 0 });
+        useSession.setState({ phaseIndex: randomPhase });
         return;
       }
     }
@@ -326,11 +343,11 @@ export default function PlayPage() {
     );
   }
 
-  // Detective uses different phase logic
-  const phaseNumber = role.id === 'detective' ? session.detectiveQuestionIndex + 1 : session.phaseIndex + 1;
+  // Detective now uses single question logic like other characters
+  const phaseNumber = session.phaseIndex + 1;
   const currentPhase = role.phases[session.phaseIndex];
   const timeLeft = Math.max(0, Math.ceil(session.nextAttackMs / 1000));
-  const totalPhases = role.id === 'detective' ? 5 : phasesPerRun;
+  const totalPhases = role.id === 'detective' ? 1 : phasesPerRun;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
@@ -509,63 +526,25 @@ export default function PlayPage() {
                     }
                   }}
                   onScore={(score, validationResult) => {
-                    // Detective custom logic
+                    // Detective custom logic - single question completion
                     if (role.id === 'detective') {
                       if (score >= 100) {
-                        // Correct answer - mark question as completed and move to next
-                        session.completeDetectiveQuestion(session.detectiveCurrentQuestions[session.detectiveQuestionIndex]);
+                        // Correct answer - complete the case immediately
+                        markRoleWin(role.id);
+                        push('success', 'Detective case solved!');
+                        if (rafRef.current) {
+                          cancelAnimationFrame(rafRef.current);
+                          rafRef.current = null;
+                        }
+                        useSession.setState({ running: false });
+                        setShowVictoryModal(true);
                         
-                        const nextQuestionIndex = session.detectiveQuestionIndex + 1;
-                        if (nextQuestionIndex >= 5) {
-                          // Completed all 5 questions in this session
-                          markRoleWin(role.id);
-                          push('success', 'Detective case solved!');
-                          if (rafRef.current) {
-                            cancelAnimationFrame(rafRef.current);
-                            rafRef.current = null;
-                          }
-                          useSession.setState({ running: false });
-                          setShowVictoryModal(true);
-                          
-                          // Generate new random questions for next session
-                          const newQuestions = selectDetectiveQuestions(role.phases.length, session.detectiveCompletedQuestions);
-                          try {
-                            localStorage.setItem(
-                              `ph-detective-${role.id}`,
-                              JSON.stringify({
-                                completedQuestions: [...session.detectiveCompletedQuestions, session.detectiveCurrentQuestions[session.detectiveQuestionIndex]],
-                                currentQuestions: newQuestions,
-                                questionIndex: 0,
-                                playerHP: session.playerHP,
-                              })
-                            );
-                          } catch {
-                            // Failed to save detective progress
-                          }
-                        } else {
-                          // Move to next question in current session
-                          const nextPhaseIndex = session.detectiveCurrentQuestions[nextQuestionIndex];
-                          useSession.setState({ 
-                            phaseIndex: nextPhaseIndex,
-                            detectiveQuestionIndex: nextQuestionIndex 
-                          });
-                          push('success', `Question ${nextQuestionIndex}/5 completed!`);
-                          setShowPhaseClearModal(true);
-                          
-                          // Save progress
-                          try {
-                            localStorage.setItem(
-                              `ph-detective-${role.id}`,
-                              JSON.stringify({
-                                completedQuestions: [...session.detectiveCompletedQuestions, session.detectiveCurrentQuestions[session.detectiveQuestionIndex]],
-                                currentQuestions: session.detectiveCurrentQuestions,
-                                questionIndex: nextQuestionIndex,
-                                playerHP: session.playerHP,
-                              })
-                            );
-                          } catch {
-                            // Failed to save detective progress
-                          }
+                        // Remove detective progress (case completed)
+                        try {
+                          localStorage.removeItem(`ph-detective-${role.id}`);
+                          localStorage.removeItem(`ph-detective-chat-${role.id}`); // Clear chat history
+                        } catch {
+                          // Failed to remove detective progress
                         }
                       }
                       // For detective, incorrect answers don't do anything here (damage is handled by AI responses)
