@@ -11,6 +11,7 @@ import TaskPanel from '../components/TaskPanel';
 import AnswerPanel from '../components/AnswerPanel';
 import ChatPanel from '../components/ChatPanel';
 import { getCharacterStats } from '../lib/characterStats';
+import { selectDetectiveQuestions } from '../store/session';
 
 function pickCharacterSprite(id: string): string {
   if (id.toLowerCase().includes('bard')) return '/sprites/bard.svg';
@@ -18,6 +19,7 @@ function pickCharacterSprite(id: string): string {
   if (id.toLowerCase().includes('alch')) return '/sprites/alchemist.svg';
   if (id.toLowerCase().includes('hack')) return '/sprites/hacker.svg';
   if (id.toLowerCase().includes('myst')) return '/sprites/mysterious.svg';
+  if (id.toLowerCase().includes('detective')) return '/sprites/detective.svg';
   return '/sprites/engineer.svg';
 }
 
@@ -41,10 +43,103 @@ export default function PlayPage() {
   const [showMonsterDamage, setShowMonsterDamage] = useState(false);
   const [showVictoryModal, setShowVictoryModal] = useState(false);
   const [showPhaseClearModal, setShowPhaseClearModal] = useState(false);
+  
+  // Detective damage handler
+  const handleDetectiveDamage = () => {
+    useSession.setState((s) => {
+      const newHp = Math.max(0, s.playerHP - 1);
+      
+      // Trigger player damage animation
+      setPlayerShaking(true);
+      setShowPlayerDamage(true);
+      setTimeout(() => setPlayerShaking(false), 300);
+      setTimeout(() => setShowPlayerDamage(false), 800);
+      
+      if (newHp <= 0) {
+        // Game over for detective - only reset current session, keep question progress
+        setTimeout(() => {
+          try {
+            if (role) {
+              // Save detective progress but reset HP for restart
+              localStorage.setItem(
+                `ph-detective-${role.id}`,
+                JSON.stringify({
+                  completedQuestions: s.detectiveCompletedQuestions,
+                  currentQuestions: s.detectiveCurrentQuestions,
+                  questionIndex: 0, // Reset to first question in current set
+                  playerHP: characterStats?.health || 30, // Reset HP
+                })
+              );
+            }
+          } catch {
+            // Failed to save progress
+          }
+          // Force a page reload to return to main menu
+          window.location.href = '/';
+        }, 800);
+        return { ...s, playerHP: 0, running: false };
+      }
+      
+      // Persist detective progress
+      try {
+        if (role) {
+          localStorage.setItem(
+            `ph-detective-${role.id}`,
+            JSON.stringify({
+              completedQuestions: s.detectiveCompletedQuestions,
+              currentQuestions: s.detectiveCurrentQuestions,
+              questionIndex: s.detectiveQuestionIndex,
+              playerHP: newHp,
+            })
+          );
+        }
+      } catch {
+        // Failed to save progress
+      }
+      
+      return { ...s, playerHP: newHp };
+    });
+  };
 
   useEffect(() => {
     if (!role || !characterStats) return;
-    // Load saved progress if present; otherwise start fresh
+    
+    if (role.id === 'detective') {
+      // Detective-specific initialization
+      try {
+        const key = `ph-detective-${role.id}`;
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const saved = JSON.parse(raw || '{}');
+          const completedQuestions = saved.completedQuestions || [];
+          const currentQuestions = saved.currentQuestions || selectDetectiveQuestions(role.phases.length, completedQuestions);
+          const questionIndex = Math.max(0, Math.min(Number(saved.questionIndex) || 0, currentQuestions.length - 1));
+          const savedPlayerHP = Math.max(0, Math.min(characterStats.health, Number(saved.playerHP) || characterStats.health));
+          
+          session.resetForRole(role.id, savedPlayerHP, 100);
+          session.setDetectiveProgress(completedQuestions, currentQuestions, questionIndex);
+          useSession.setState({ phaseIndex: currentQuestions[questionIndex] || 0 });
+          return;
+        } else {
+          // First time playing detective - select random questions
+          const completedQuestions: number[] = [];
+          const currentQuestions = selectDetectiveQuestions(role.phases.length, completedQuestions);
+          session.resetForRole(role.id, characterStats.health, 100);
+          session.setDetectiveProgress(completedQuestions, currentQuestions, 0);
+          useSession.setState({ phaseIndex: currentQuestions[0] || 0 });
+          return;
+        }
+      } catch {
+        // Failed to load detective progress - use defaults
+        const currentQuestions = selectDetectiveQuestions(role.phases.length, []);
+        session.resetForRole(role.id, characterStats.health, 100);
+        session.setDetectiveProgress([], currentQuestions, 0);
+        useSession.setState({ phaseIndex: currentQuestions[0] || 0 });
+        return;
+      }
+    }
+    
+    // Normal character initialization
     try {
       const key = `ph-progress-${role.id}`;
       const raw = localStorage.getItem(key);
@@ -95,7 +190,7 @@ export default function PlayPage() {
           lastMonsterHP.current = s.monsterHP;
         }
         
-        if (next <= 0) {
+        if (next <= 0 && role.id !== 'detective') {
           const newHp = Math.max(0, s.playerHP - settings.monsterDamagePerTick);
           
           // Trigger player damage animation
@@ -136,6 +231,12 @@ export default function PlayPage() {
           }
           return { ...s, playerHP: newHp, nextAttackMs: settings.attackIntervalMs };
         }
+        
+        // For detective, don't auto-advance attack timer
+        if (role.id === 'detective') {
+          return s;
+        }
+        
         return { ...s, nextAttackMs: next };
       });
       
@@ -161,9 +262,11 @@ export default function PlayPage() {
     );
   }
 
-  const phaseNumber = session.phaseIndex + 1;
+  // Detective uses different phase logic
+  const phaseNumber = role.id === 'detective' ? session.detectiveQuestionIndex + 1 : session.phaseIndex + 1;
   const currentPhase = role.phases[session.phaseIndex];
   const timeLeft = Math.max(0, Math.ceil(session.nextAttackMs / 1000));
+  const totalPhases = role.id === 'detective' ? 5 : phasesPerRun;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
@@ -177,14 +280,17 @@ export default function PlayPage() {
               className="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm text-white"
             >{t('backToMenu')}</button>
             <h1 className="text-2xl md:text-3xl font-bold text-white text-center flex-1">
-              {role.name} - {language === 'zh-hk' ? `${t('stageLabel')}${phaseNumber}${t('stageWithNumber')}` : `${t('stageLabel')} ${phaseNumber}`}
+              {role.id === 'detective' 
+                ? `${role.name} - ${t('caseClose')}`
+                : `${role.name} - ${language === 'zh-hk' ? `${t('stageLabel')}${phaseNumber}${t('stageWithNumber')}` : `${t('stageLabel')} ${phaseNumber}`}`
+              }
             </h1>
             <div className="w-[110px]" />
           </div>
           <div className="flex justify-center items-center gap-4 text-sm mt-2">
-            <span className="text-slate-400">{session.phaseIndex + 1}/{phasesPerRun}</span>
-            <div className={`px-3 py-1 rounded-full ${timeLeft <= 2 ? 'bg-red-500/20 text-red-300' : 'bg-orange-500/20 text-orange-300'}`}>
-              {t('nextAttack')}: {timeLeft}s
+            <span className="text-slate-400">{phaseNumber}/{totalPhases}</span>
+            <div className={`px-3 py-1 rounded-full ${role.id === 'detective' ? 'bg-yellow-500/20 text-yellow-300' : timeLeft <= 2 ? 'bg-red-500/20 text-red-300' : 'bg-orange-500/20 text-orange-300'}`}>
+              {role.id === 'detective' ? t('detectiveDamageRule') : `${t('nextAttack')}: ${timeLeft}s`}
             </div>
           </div>
         </div>
@@ -289,6 +395,69 @@ export default function PlayPage() {
                   key={`${role.id}-${session.phaseIndex}`}
                   phase={currentPhase}
                   onScore={(score) => {
+                    // Detective custom logic
+                    if (role.id === 'detective') {
+                      if (score >= 100) {
+                        // Correct answer - mark question as completed and move to next
+                        session.completeDetectiveQuestion(session.detectiveCurrentQuestions[session.detectiveQuestionIndex]);
+                        
+                        const nextQuestionIndex = session.detectiveQuestionIndex + 1;
+                        if (nextQuestionIndex >= 5) {
+                          // Completed all 5 questions in this session
+                          markRoleWin(role.id);
+                          push('success', 'Detective case solved!');
+                          if (rafRef.current) {
+                            cancelAnimationFrame(rafRef.current);
+                            rafRef.current = null;
+                          }
+                          useSession.setState({ running: false });
+                          setShowVictoryModal(true);
+                          
+                          // Generate new random questions for next session
+                          const newQuestions = selectDetectiveQuestions(role.phases.length, session.detectiveCompletedQuestions);
+                          try {
+                            localStorage.setItem(
+                              `ph-detective-${role.id}`,
+                              JSON.stringify({
+                                completedQuestions: [...session.detectiveCompletedQuestions, session.detectiveCurrentQuestions[session.detectiveQuestionIndex]],
+                                currentQuestions: newQuestions,
+                                questionIndex: 0,
+                                playerHP: session.playerHP,
+                              })
+                            );
+                          } catch {
+                            // Failed to save detective progress
+                          }
+                        } else {
+                          // Move to next question in current session
+                          const nextPhaseIndex = session.detectiveCurrentQuestions[nextQuestionIndex];
+                          useSession.setState({ 
+                            phaseIndex: nextPhaseIndex,
+                            detectiveQuestionIndex: nextQuestionIndex 
+                          });
+                          push('success', `Question ${nextQuestionIndex}/5 completed!`);
+                          setShowPhaseClearModal(true);
+                          
+                          // Save progress
+                          try {
+                            localStorage.setItem(
+                              `ph-detective-${role.id}`,
+                              JSON.stringify({
+                                completedQuestions: [...session.detectiveCompletedQuestions, session.detectiveCurrentQuestions[session.detectiveQuestionIndex]],
+                                currentQuestions: session.detectiveCurrentQuestions,
+                                questionIndex: nextQuestionIndex,
+                                playerHP: session.playerHP,
+                              })
+                            );
+                          } catch {
+                            // Failed to save detective progress
+                          }
+                        }
+                      }
+                      // For detective, incorrect answers don't do anything here (damage is handled by AI responses)
+                      return;
+                    }
+                    
                     // Mysterious custom logic
                     if (role.id === 'mysterious') {
                       if (score >= 100000000) {
@@ -428,7 +597,11 @@ export default function PlayPage() {
           {/* Chat Panel */}
           {currentPhase && (
             <div className="bg-white/5 backdrop-blur rounded-xl p-6 border border-white/10 h-fit">
-              <ChatPanel role={role} phase={currentPhase} />
+              <ChatPanel 
+                role={role} 
+                phase={currentPhase} 
+                onDetectiveDamage={role.id === 'detective' ? handleDetectiveDamage : undefined}
+              />
             </div>
           )}
         </div>

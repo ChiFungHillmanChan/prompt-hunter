@@ -23,6 +23,9 @@ function getGameTypes(id: string): string[] {
   if (id.toLowerCase().includes('hack')) {
     return ['typeSecurityChallenges', 'typeDebugCode', 'typeCombatChallenge'];
   }
+  if (id.toLowerCase().includes('detective')) {
+    return ['typeLogicPuzzles', 'typeCombatChallenge'];
+  }
   if (id.toLowerCase().includes('myst')) {
     return ['typeCreativeTasks'];
   }
@@ -35,6 +38,7 @@ function pickSprite(id: string): string {
   if (id.toLowerCase().includes('necro')) return '/sprites/necromancer.svg';
   if (id.toLowerCase().includes('alch')) return '/sprites/alchemist.svg';
   if (id.toLowerCase().includes('hack')) return '/sprites/hacker.svg';
+  if (id.toLowerCase().includes('detective')) return '/sprites/detective.svg';
   if (id.toLowerCase().includes('myst')) return '/sprites/mysterious.svg';
   return '/sprites/engineer.svg';
 }

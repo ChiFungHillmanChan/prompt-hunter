@@ -40,7 +40,8 @@ export const translations = {
     combatOverview: "⚔️ Combat Overview",
     challengePhases: "Challenge Phases",
     rounds: "Rounds",
-    completeAllPhases: "Complete all phases to defeat",
+    completeAllPhases: "Use",
+    completeAllPhasesEnd: "to complete all phases",
     startBattle: "⚔️ Start Battle",
     
     // Difficulty levels
@@ -80,7 +81,8 @@ export const translations = {
     securitySystems: "Security & Systems",
     unknownPowers: "Unknown Powers",
     generalCombat: "General Combat",
-    
+    detectiveMysteries: "Detective Mysteries & Lateral Thinking",
+
     // Play page UI
     backToMenu: "Back to Menu", 
     stageLabel: "Stage",
@@ -137,6 +139,27 @@ export const translations = {
     typeSecurityChallenges: "🔒 Security Challenges",
     typeDataProcessing: "📊 Data Processing",
     typeCombatChallenge: "⚔️ Combat Challenge",
+
+    // How to Play
+    howToPlay: "📖 How to Play",
+    howToPlayTitle: "How to Play Prompt Hunter",
+    howToPlayStep1Title: "1. Generate API Key",
+    howToPlayStep1Desc: "First, you'll need to get access to an AI assistant by generating a free Gemini API key. This allows the AI to help you during battles.",
+    howToPlayStep2Title: "2. Choose Your Character",
+    howToPlayStep2Desc: "Select a character from the available roster. Each character has different abilities and attack strategies to defeat monsters. Study their specialties!",
+    howToPlayStep3Title: "3. Answer Questions",
+    howToPlayStep3Desc: "During battles, you'll face challenging questions. If you don't know the answer, ask the AI assistant for help. The AI knows the questions and answers but won't tell you directly - it will give hints to help you think.",
+    howToPlayStep4Title: "4. Watch Out for Tricks",
+    howToPlayStep4Desc: "Some questions contain tricks where the AI might trap you or not help at all. Use your judgment and critical thinking!",
+    howToPlayStep5Title: "5. Beat All Levels",
+    howToPlayStep5Desc: "Complete all phases to defeat each character and become the ultimate Prompt Hunter master!",
+    close: "Close",
+
+    // Detective Mode
+    detectiveMode: "🔍 Detective Mode:",
+    detectiveModeDesc: "AI will only respond: Yes / No / Not related",
+    caseClose: "Case Close",
+    detectiveDamageRule: "You only take damage from 'No' or 'Not related' answers",
   },
   'zh-hk': {
     // App title and tagline  
@@ -179,7 +202,8 @@ export const translations = {
     combatOverview: "⚔️ 戰鬥概覽",
     challengePhases: "挑戰階段", 
     rounds: "回合",
-    completeAllPhases: "完成所有階段嚟打敗",
+    completeAllPhases: "用",
+    completeAllPhasesEnd: "嚟完成所有階段",
     startBattle: "⚔️ 開始戰鬥",
     
     // Difficulty levels
@@ -216,8 +240,9 @@ export const translations = {
     darkArtsAlgorithms: "黑暗法術同演算法",
     dataTransformation: "數據轉換",
     securitySystems: "安全同系統",
-    unknownPowers: "未知力量",
+    unknownPowers: "神秘力量",
     generalCombat: "一般戰鬥",
+    detectiveMysteries: "偵探謎題同側向思考",
     
     // Play page UI  
     backToMenu: "返回選單",
@@ -275,6 +300,27 @@ export const translations = {
     typeSecurityChallenges: "🔒 保安挑戰",
     typeDataProcessing: "📊 數據處理",
     typeCombatChallenge: "⚔️ 戰鬥挑戰",
+
+    // How to Play
+    howToPlay: "📖 點樣玩",
+    howToPlayTitle: "指令獵人點樣玩",
+    howToPlayStep1Title: "1. 生成 API 密鑰",
+    howToPlayStep1Desc: "首先，你需要生成一個免費嘅 Gemini API 密鑰嚟連接 AI 助手。呢個可以讓 AI 喺戰鬥期間幫助你。",
+    howToPlayStep2Title: "2. 揀選你嘅角色",
+    howToPlayStep2Desc: "從可用角色中揀選一個。每個角色都有不同嘅能力同攻擊策略嚟打敗怪物。記得研究佢哋嘅專長！",
+    howToPlayStep3Title: "3. 回答問題",
+    howToPlayStep3Desc: "喺戰鬥期間，你會遇到有挑戰性嘅問題。如果你唔知道答案，可以向 AI 助手求助。AI 知道問題及答案，但唔會直接話畀你知 - 佢會俾提示幫你思考。",
+    howToPlayStep4Title: "4. 小心陷阱",
+    howToPlayStep4Desc: "有啲問題包含陷阱，AI 可能會困你或者完全唔幫你。要運用你嘅判斷力同批判性思維！",
+    howToPlayStep5Title: "5. 打敗所有關卡",
+    howToPlayStep5Desc: "完成所有階段嚟打敗每個角色，成為終極嘅指令獵人大師！",
+    close: "關閉",
+
+    // Detective Mode
+    detectiveMode: "🔍 偵探模式：",
+    detectiveModeDesc: "AI 只會回答：係 / 唔係 / 無關",
+    caseClose: "識破案件",
+    detectiveDamageRule: "只有收到「唔係」或「無關」答案先會受傷",
   }
 } as const;
 export type Language = keyof typeof translations;

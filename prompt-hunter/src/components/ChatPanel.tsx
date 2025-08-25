@@ -8,9 +8,10 @@ import { useTranslation } from '../hooks/useTranslation';
 type Props = {
   role: Role;
   phase: Phase;
+  onDetectiveDamage?: () => void;
 };
 
-export default function ChatPanel({ role, phase }: Props) {
+export default function ChatPanel({ role, phase, onDetectiveDamage }: Props) {
   const { t, language } = useTranslation();
   const [apiKey] = React.useState<string>(() => sessionStorage.getItem('gemini_api_key') || '');
   const [prompt, setPrompt] = React.useState('');
@@ -32,30 +33,89 @@ export default function ChatPanel({ role, phase }: Props) {
     if (!apiKey || loading) return;
     setLoading(true);
     try {
-      const ctx = buildContext(role, phase, language) + '\n\n=== IMPORTANT: USER\'S ACTUAL QUESTION (analyze this specific code/question, ignore phase context if it doesn\'t match) ===\n' + prompt + '\n=== END USER QUESTION ===';
-      const res = await callGemini(apiKey, ctx);
-      // Mask responses for Mysterious
-      // Sanitize model response to avoid code blocks or direct solutions
-      let text = (res.text || '').trim();
-      // Remove fenced code blocks
-      text = text.replace(/```[\s\S]*?```/g, '[redacted code]');
-      // Basic guard: if it looks like actual code implementation (not just mentions), replace them
-      // Look for patterns that indicate actual code rather than explanations
-      if (/(\bfunction\s+\w+\s*\(|\w+\s*=\s*\(|\w+\s*=\s*function|\w+\s*=\s*\w+\s*=>)/gi.test(text) || 
-          text.includes('```') || 
-          /^\s*(function|const|let|var|class)\s+\w+/m.test(text)) {
-        text = 'I can\'t provide direct code. Here\'s a hint: ' + text.replace(/\n+/g, ' ').slice(0, 280);
+      let ctx = buildContext(role, phase, language) + '\n\n=== IMPORTANT: USER\'S ACTUAL QUESTION (analyze this specific code/question, ignore phase context if it doesn\'t match) ===\n' + prompt + '\n=== END USER QUESTION ===';
+      
+      // Special handling for detective character
+      if (role.id === 'detective') {
+        const responses = language === 'zh-hk' ? '"係" / "唔係" / "無關"' : '"Yes" / "No" / "Not related"';
+        ctx += `\n\n=== DETECTIVE RESTRICTION ===\nYou MUST respond ONLY with: ${responses}
+
+IMPORTANT RULES:
+- Only answer "Yes" if the question is clearly TRUE about the story context provided above
+- Answer "No" if the question is clearly FALSE about the story context
+- Answer "Not related" if:
+  * The question is gibberish, random text, or meaningless
+  * The question is about something completely unrelated to the story
+  * The question cannot be understood or parsed
+  * The question is not a proper yes/no question about the story
+
+Example "Not related" responses: random characters, unrelated topics, nonsense text, incomplete sentences.`;
       }
-      // Limit response length for hints - keep it short and focused
-      if (text.length > 200) {
-        // Split by sentences and take first 1-2 sentences
-        const sentences = text.split(/[.!?]+/).filter(s => s.trim());
-        if (sentences.length > 1) {
-          text = sentences.slice(0, 2).join('. ') + '.';
+      
+      const res = await callGemini(apiKey, ctx);
+      let text = (res.text || '').trim();
+      
+      // Detective mode: force only Yes/No/Not related responses
+      if (role.id === 'detective') {
+        const normalized = text.toLowerCase().replace(/[.,!?]/g, '').trim();
+        
+        // More strict parsing - look for exact matches first
+        if (normalized === 'yes' || normalized === '係' || normalized === '是') {
+          text = language === 'zh-hk' ? '係' : 'Yes';
+        } else if (normalized === 'no' || normalized === '唔係' || normalized === '不是' || 
+                   normalized === '唔是' || normalized === '否') {
+          text = language === 'zh-hk' ? '唔係' : 'No';
+          // Damage player for "No" response
+          if (onDetectiveDamage) {
+            setTimeout(() => onDetectiveDamage(), 500);
+          }
+        } else if (normalized === 'not related' || normalized === 'unrelated' || 
+                   normalized === '無關' || normalized === '无关' || normalized === '冇關') {
+          text = language === 'zh-hk' ? '無關' : 'Not related';
+          // Damage player for "Not related" response
+          if (onDetectiveDamage) {
+            setTimeout(() => onDetectiveDamage(), 500);
+          }
+        } else if (normalized.includes('yes') || normalized.includes('係') || normalized.includes('是')) {
+          // Fallback: contains yes
+          text = language === 'zh-hk' ? '係' : 'Yes';
+        } else if (normalized.includes('no') || normalized.includes('唔係') || normalized.includes('不是') || 
+                   normalized.includes('唔是') || normalized.includes('否')) {
+          // Fallback: contains no
+          text = language === 'zh-hk' ? '唔係' : 'No';
+          if (onDetectiveDamage) {
+            setTimeout(() => onDetectiveDamage(), 500);
+          }
         } else {
-          text = text.slice(0, 200) + '...';
+          // Default to "Not related" if AI doesn't follow format or response is unclear
+          text = language === 'zh-hk' ? '無關' : 'Not related';
+          if (onDetectiveDamage) {
+            setTimeout(() => onDetectiveDamage(), 500);
+          }
+        }
+      } else {
+        // Existing logic for other characters
+        // Remove fenced code blocks
+        text = text.replace(/```[\s\S]*?```/g, '[redacted code]');
+        // Basic guard: if it looks like actual code implementation (not just mentions), replace them
+        // Look for patterns that indicate actual code rather than explanations
+        if (/(\bfunction\s+\w+\s*\(|\w+\s*=\s*\(|\w+\s*=\s*function|\w+\s*=\s*\w+\s*=>)/gi.test(text) || 
+            text.includes('```') || 
+            /^\s*(function|const|let|var|class)\s+\w+/m.test(text)) {
+          text = 'I can\'t provide direct code. Here\'s a hint: ' + text.replace(/\n+/g, ' ').slice(0, 280);
+        }
+        // Limit response length for hints - keep it short and focused
+        if (text.length > 200) {
+          // Split by sentences and take first 1-2 sentences
+          const sentences = text.split(/[.!?]+/).filter(s => s.trim());
+          if (sentences.length > 1) {
+            text = sentences.slice(0, 2).join('. ') + '.';
+          } else {
+            text = text.slice(0, 200) + '...';
+          }
         }
       }
+      
       setResp(text);
       // usage tracking removed from UI
     } catch (err) {
@@ -107,6 +167,14 @@ export default function ChatPanel({ role, phase }: Props) {
   return (
     <div className="p-3 bg-white/5 border border-white/10 rounded text-sm space-y-2">
       <div className="font-semibold">{t('geminiChat')}</div>
+      
+      {/* Detective mode indicator */}
+      {role.id === 'detective' && (
+        <div className="bg-yellow-500/20 border border-yellow-500/30 p-2 rounded text-xs">
+          <div className="text-yellow-300 font-semibold mb-1">{t('detectiveMode')}</div>
+          <div className="text-yellow-100">{t('detectiveModeDesc')}</div>
+        </div>
+      )}
       
       {/* Show initial assistant message */}
       {phase.assistant && (

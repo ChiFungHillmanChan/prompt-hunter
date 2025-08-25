@@ -8,6 +8,8 @@ import { useTranslation } from '../hooks/useTranslation';
 import React from 'react';
 
 import { getCharacterStats } from '../lib/characterStats';
+import { selectDetectiveQuestions } from '../store/session';
+import HowToPlay from '../components/HowToPlay';
 
 export default function SettingsMenu() {
   const nav = useNavigate();
@@ -20,6 +22,7 @@ export default function SettingsMenu() {
   const [showKeyInput, setShowKeyInput] = React.useState(false);
   const [selectedCharacter, setSelectedCharacter] = React.useState<{ name: string; id: string; difficulty: string; description?: string } | null>(null);
   const [showRestartConfirmation, setShowRestartConfirmation] = React.useState<{ name: string; id: string } | null>(null);
+  const [showHowToPlay, setShowHowToPlay] = React.useState(false);
 
   const onRemoveKey = () => {
     sessionStorage.removeItem('gemini_api_key');
@@ -77,15 +80,44 @@ export default function SettingsMenu() {
 
   const onConfirmRestart = () => {
     if (showRestartConfirmation) {
-      // Clear character progress from localStorage
-      try {
-        localStorage.removeItem(`ph-progress-${showRestartConfirmation.id}`);
-      } catch {
-        // Failed to remove character progress
+      if (showRestartConfirmation.id === 'detective') {
+        // Detective-specific restart: preserve completed questions, reset session only
+        try {
+          const key = `ph-detective-${showRestartConfirmation.id}`;
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const saved = JSON.parse(raw);
+            const completedQuestions = saved.completedQuestions || [];
+            
+            // Get detective role from current pack to determine total questions
+            const detectiveRole = pack?.roles?.find((role: any) => role.id === 'detective');
+            const totalQuestions = detectiveRole?.phases?.length || 5;
+            
+            const newQuestions = selectDetectiveQuestions(totalQuestions, completedQuestions);
+            
+            // Reset session state but keep completed questions
+            localStorage.setItem(key, JSON.stringify({
+              completedQuestions: completedQuestions, // Keep completed questions
+              currentQuestions: newQuestions,
+              questionIndex: 0,
+              playerHP: 30, // Full HP for detective
+            }));
+          }
+        } catch {
+          // Failed to update detective progress, fallback to full reset
+          localStorage.removeItem(`ph-detective-${showRestartConfirmation.id}`);
+        }
+      } else {
+        // Normal character restart: clear all progress
+        try {
+          localStorage.removeItem(`ph-progress-${showRestartConfirmation.id}`);
+        } catch {
+          // Failed to remove character progress
+        }
+        
+        // Reset completed role in progress store
+        useProgress.getState().resetRole(showRestartConfirmation.id);
       }
-      
-      // Reset completed role in progress store
-      useProgress.getState().resetRole(showRestartConfirmation.id);
       
       // Close modals
       setSelectedCharacter(null);
@@ -108,13 +140,15 @@ export default function SettingsMenu() {
           setShowRestartConfirmation(null);
         } else if (selectedCharacter) {
           setSelectedCharacter(null);
+        } else if (showHowToPlay) {
+          setShowHowToPlay(false);
         }
       }
     };
     
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [selectedCharacter, showRestartConfirmation]);
+  }, [selectedCharacter, showRestartConfirmation, showHowToPlay]);
 
 
   return (
@@ -125,9 +159,17 @@ export default function SettingsMenu() {
           <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-2">
             {t('appTitle')}
           </h1>
-          <p className="text-slate-400 text-sm">
+          <p className="text-slate-400 text-sm mb-4">
             {t('tagline')}
           </p>
+          
+          {/* How to Play Button */}
+          <button
+            onClick={() => setShowHowToPlay(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white font-medium transition-colors text-sm"
+          >
+            {t('howToPlay')}
+          </button>
         </div>
 
         {/* Settings Grid */}
@@ -307,9 +349,14 @@ export default function SettingsMenu() {
                         
                         <div className="flex items-center justify-between">
                           <div className="text-xs text-slate-400">
-                            {pack?.meta.phases_per_run || 5} {t('challenges')}
+                            {r.id === 'detective' ? '1' : (pack?.meta.phases_per_run || 5)} {t('challenges')}
                           </div>
                           <div className="flex items-center gap-2">
+                            {(r as any).feature === 'new' && (
+                              <span className="px-2 py-1 text-xs bg-purple-600 text-white rounded-full font-medium animate-pulse">
+                                NEW
+                              </span>
+                            )}
                             {stageLabel && !won && (
                               <span className="px-2 py-1 text-xs bg-blue-600 text-white rounded-full font-medium">
                                 {stageLabel}
@@ -395,9 +442,11 @@ export default function SettingsMenu() {
               <div className="bg-purple-500/20 rounded-lg p-4 border border-purple-500/30">
                 <div className="text-center">
                   <div className="text-purple-300 text-sm mb-1">{t('challengePhases')}</div>
-                  <div className="text-white text-lg font-bold">{pack?.meta.phases_per_run || 5} {t('rounds')}</div>
+                  <div className="text-white text-lg font-bold">
+                    {selectedCharacter.id === 'detective' ? '1' : (pack?.meta.phases_per_run || 5)} {t('rounds')}
+                  </div>
                   <div className="text-purple-300 text-xs mt-1">
-                    {t('completeAllPhases')} {selectedCharacter.name}
+                    {t('completeAllPhases')} {selectedCharacter.name} {t('completeAllPhasesEnd')}
                   </div>
                 </div>
               </div>
@@ -470,6 +519,9 @@ export default function SettingsMenu() {
           </div>
         </div>
       )}
+
+      {/* How to Play Modal */}
+      <HowToPlay isOpen={showHowToPlay} onClose={() => setShowHowToPlay(false)} />
     </div>
   );
 }
@@ -480,6 +532,7 @@ function pickSprite(id: string): string {
   if (id.toLowerCase().includes('alch')) return '/sprites/alchemist.svg';
   if (id.toLowerCase().includes('hack')) return '/sprites/hacker.svg';
   if (id.toLowerCase().includes('myst')) return '/sprites/mysterious.svg';
+  if (id.toLowerCase().includes('detective')) return '/sprites/detective.svg';
   return '/sprites/engineer.svg';
 }
 

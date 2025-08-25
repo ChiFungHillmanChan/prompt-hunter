@@ -92,6 +92,40 @@ export async function validateAnswer(
       const ok = result >= 100; // Only perfect scores pass
       return { ok, message: String(result), score: result };
     }
+    case 'keywords': {
+      const lower = text.toLowerCase();
+      const required = Array.isArray(v.required) ? v.required : [];
+      const optional = Array.isArray(v.optional) ? v.optional : [];
+      
+      // Check required keywords - all must be present
+      const missingRequired = required.filter((k: unknown) => 
+        !lower.includes(String(k).toLowerCase())
+      );
+      
+      // Check optional keywords - count how many are present
+      const foundOptional = optional.filter((k: unknown) => 
+        lower.includes(String(k).toLowerCase())
+      );
+      
+      const allRequiredFound = missingRequired.length === 0;
+      
+      // Build feedback message
+      let message = '';
+      if (allRequiredFound) {
+        message = `✅ All required keywords found. Optional: ${foundOptional.length}/${optional.length}`;
+      } else {
+        message = `❌ Missing required keywords: ${missingRequired.join(', ')}`;
+        if (foundOptional.length > 0) {
+          message += `. Found optional: ${foundOptional.map(String).join(', ')}`;
+        }
+      }
+      
+      return { 
+        ok: allRequiredFound, 
+        message,
+        score: allRequiredFound ? 100 : 0
+      };
+    }
     case 'mysterious': {
       const lower = text.toLowerCase();
       const keywords = Array.isArray(v.keywords) ? v.keywords : [];

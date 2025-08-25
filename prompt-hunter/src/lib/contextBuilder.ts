@@ -27,6 +27,15 @@ export function buildContext(role: Role, phase: Phase, language: Language = 'en'
     lines.push('\nHidden data available');
   }
   
+  // Detective special handling - include the full answer/story for AI to know
+  if (phase.task_type === 'logic-riddle' && (phase as any).answer) {
+    lines.push('\nDETECTIVE MODE - Full Story Context:');
+    lines.push('You know this complete story and must answer Yes/No/Not related based on it:');
+    lines.push((phase as any).answer);
+    lines.push('\nIMPORTANT: Players will ask you questions to uncover this story step by step.');
+    lines.push('Answer ONLY with "Yes", "No", or "Not related" based on whether their question is correct about this story.');
+  }
+  
   // Add language instruction for Gemini
   if (language === 'zh-hk') {
     lines.push('\n---');

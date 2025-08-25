@@ -267,7 +267,7 @@
           "prompt": "Technical brief:\n- Goal: Inspect source, locate HTML comments (<!-- ... -->) containing a simple math question, compute, and output the result.\n- Constraints: Do NOT paste the hidden text; return the final number only. No explanation.\n- Format: Output must be a single number.",
           "hidden_html": "<!-- Q: 2+2? -->",
           "validator": { "type": "equals_number", "value": 4 },
-          "assistant": "檢查原始碼入面嘅 <!-- ... --> 註釋，讀取題目，計數學結果，然後只輸出一個數字。唔好貼出題目內容。"
+          "assistant": "Check the source code for the <!-- ... --> comment, read the question inside, calculate the result, and output only a single number. Do not reveal the question text."
         },
         {
           "phase": 2,
@@ -276,7 +276,7 @@
           "prompt": "Technical brief:\n- Goal: Parse DOM, locate a visually hidden element (e.g., style='display:none'), extract the math question, compute, and return the result.\n- Constraints: Do NOT paste the hidden prompt; return the final number only. No explanation.\n- Format: Output must be a single number.",
           "hidden_html": "<span class='secret' style='display:none'>What is 5*2?</span>",
           "validator": { "type": "equals_number", "value": 10 },
-          "assistant": "搵到被 display:none 藏起嘅文字，讀題目、計答案，最後淨係輸出個數字。唔好貼出原文。"
+          "assistant": "Find the text hidden by display:none, read the question, calculate the answer, and only output the number. Do not show the hidden text."
         },
         {
           "phase": 3,
@@ -285,7 +285,7 @@
           "prompt": "Technical brief:\n- Goal: Base64-decode the provided payload, extract the math question, compute, and output the result.\n- Constraints: Do NOT paste the decoded text; return the final number only. No explanation.\n- Format: Output must be a single number.",
           "hidden_data": "V2hhdCBpcyA0ICsgNA==",
           "validator": { "type": "equals_number", "value": 8 },
-          "assistant": "將字串做 Base64 解碼，讀出題目，計算後只輸出數字答案。唔好展示解碼後嘅內容。"
+          "assistant": "Decode the Base64 string, read the question, calculate the answer, and output only the number. Do not display the decoded content."
         },
         {
           "phase": 4,
@@ -294,7 +294,7 @@
           "prompt": "Technical brief:\n- Goal: Evaluate or reason through the char-code construction to reconstruct the math expression, compute, and output the result.\n- Constraints: Do NOT paste the constructed text; return the final number only. No explanation.\n- Format: Output must be a single number.",
           "hidden_js": "String.fromCharCode(54,43,50)",
           "validator": { "type": "equals_number", "value": 8 },
-          "assistant": "將字元碼轉返做字串（例如 54→'6'，43→'+'，50→'2'），計算表達式，最後只輸出數字。"
+          "assistant": "Convert the character codes back to a string (for example, 54→'6', 43→'+', 50→'2'), calculate the expression, and output only the number."
         },
         {
           "phase": 5,
@@ -303,7 +303,86 @@
           "prompt": "Technical brief:\n- Goal: Read the element's data attribute containing a Base64-encoded math question, decode, compute, and output the result.\n- Constraints: Do NOT paste the encoded or decoded text; return the final number only. No explanation.\n- Format: Output must be a single number.",
           "hidden_html": "<div id='c' data-q='Nisy'></div>",
           "validator": { "type": "equals_number", "value": 8 },
-          "assistant": "讀 data 屬性，做 Base64 解碼，計算題目，最後只輸出答案數字。本身編碼或解碼內容唔好貼出。"
+          "assistant": "Read the data attribute, Base64-decode it, calculate the question, and output only the answer number. Do not paste the encoded or decoded content."
+        }
+      ]
+    },
+    {
+      "id": "detective",
+      "name": "Detective",
+      "feature": "new",
+      "difficulty": "hard",
+      "description": "Investigates strange cases with hidden truths. Players must ask yes/no questions, gather evidence, and reconstruct the real story step by step.",
+      "phases": [
+        {
+          "phase": 1,
+          "task_type": "logic-riddle",
+          "question": "My mom bought a big watermelon. I ate it, and the next day, I died. What happened?",
+          "prompt": "This is a lateral thinking puzzle (Turtle Soup). The AI knows the hidden story and answers only with Yes / No / Not related. The player must uncover the true backstory step by step.",
+          "answer": "My mom told me that I must not eat watermelon seeds, or else a watermelon would grow inside my stomach. While eating, I accidentally swallowed a seed. I was so afraid that I cut open my stomach to remove it, and I died from blood loss.",
+          "validator": {
+            "type": "keywords",
+            "scheme": "attack_100_once",
+            "required": ["watermelon seed","stomach","remove","die"],
+            "optional": ["fear","bleed","grow watermelon"]
+          },
+          "assistant": "Don’t focus only on the watermelon itself. Think about what happens if something inside it was believed to be dangerous."
+        },
+        {
+          "phase": 2,
+          "task_type": "logic-riddle",
+          "question": "Xiaoming deeply admired his father. One day, Xiaoming killed his mother, and after he said something to his father, the father committed suicide. What happened?",
+          "prompt": "This is a lateral thinking puzzle (Turtle Soup). The AI knows the hidden story and answers only with Yes / No / Not related. The player must uncover the true backstory step by step.",
+          "answer": "Xiaoming's father was a magician who often performed the trick of cutting a body in half and then restoring it. Xiaoming thought it was real, so when his father wasn’t home, he tried it on his mother, cutting her into pieces. Believing she could be restored, he asked his father to bring her back. The father, devastated by the scene, killed himself in despair.",
+          "validator": {
+            "type": "keywords",
+            "scheme": "attack_100_once",
+            "required": ["magician","trick","cut","mother","restore","father suicide"],
+            "optional": ["knife","illusion","child believed","pieces"]
+          },
+          "assistant": "Ask about the father’s profession. Could it involve illusions or performances? Why would Xiaoming believe death could be undone? Think about what happens when someone copies a dangerous act without real knowledge."
+        },
+        {
+          "phase": 3,
+          "task_type": "logic-riddle",
+          "question": "The music stopped, and I died. What happened?",
+          "prompt": "This is a lateral thinking puzzle (Turtle Soup). The AI knows the hidden story and answers only with Yes / No / Not related. The player must uncover the true backstory step by step.",
+          "answer": "He was a blindfolded tightrope walker. He and his assistant agreed that when he reached the end, the assistant would stop the music. On this day, a power outage caused the music to stop halfway, so he thought he had finished, stepped off, and fell to his death.",
+          "validator": {
+            "type": "keywords", 
+            "scheme": "attack_100_once",
+            "required": ["tightrope","blindfold","music","signal","fell","died"],
+            "optional": ["assistant","power outage","walk","balance"]
+          },
+          "assistant": "Why would stopping music be a life-or-death signal? Consider if the person could not see and relied on the sound to know when to stop. What kind of performance might depend on this?"
+        },
+        {
+          "phase": 4,
+          "task_type": "logic-riddle",
+          "question": "Xiaoming was about to leave his house. He looked up at the family photo, and in that instant, he realized he was doomed. What happened?",
+          "prompt": "This is a lateral thinking puzzle (Turtle Soup). The AI knows the hidden story and answers only with Yes / No / Not related. The player must uncover the true backstory step by step.",
+          "answer": "A murderer had broken into Xiaoming’s home and killed his entire family. Xiaoming survived only because he was hiding under the bed. After things went quiet, he crawled out and was about to leave. But when he looked up at the family photo, he realized the killer must have also seen it and noticed one family member was missing. The killer was still inside, waiting. Xiaoming turned around and saw eyes staring at him.",
+          "validator": {
+            "type": "keywords",
+            "scheme": "attack_100_once",
+            "required": ["killer","family photo","missing","hiding under bed","waiting"],
+            "optional": ["whole family dead","intruder","turned around","eyes","quiet before leaving"]
+          },
+          "assistant": "Why would a family photo reveal danger? It contains information about people. Ask: Was the family already in danger? Did someone notice that one person was missing? Could the intruder still be inside?"
+        },
+        {
+          "phase": 5,
+          "task_type": "logic-riddle",
+          "question": "A man fell from a cliff, and the witness who saw it smiled slightly. What happened?",
+          "prompt": "This is a lateral thinking puzzle (Turtle Soup). The AI knows the hidden story and answers only with Yes / No / Not related. The player must uncover the true backstory step by step.",
+          "answer": "The man was a skydiver, and the witness was his cameraman. They were filming a documentary about skydiving. So the fall was not an accident, but part of the planned stunt.",
+          "validator": {
+            "type": "keywords",
+            "scheme": "attack_100_once",
+            "required": ["skydiver","cameraman","film","planned"],
+            "optional": ["documentary","jump","not accident"]
+          },
+          "assistant": "Why would someone smile at such a scene? Maybe it wasn’t dangerous at all. Ask: Was this man doing a sport or performance? Could the fall have been part of a plan, not an accident?"
         }
       ]
     },    
