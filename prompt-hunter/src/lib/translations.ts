@@ -364,7 +364,7 @@ export const translations = {
     creatorDescription: "熱衷於 AI 遊戲體驗嘅遊戲開發者",
     personalWebsite: "個人網站",
     leaveReview: "留下評價",
-    donateToCreator: "打賞開發者",
+    donateToCreator: "贊助開發者",
     comingSoon: "即將推出",
     thanksForPlaying: "多謝你玩指令獵人！你嘅反饋有助改善遊戲。",
   }
