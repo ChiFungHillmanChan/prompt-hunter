@@ -237,6 +237,24 @@ export default function SettingsMenu() {
                 </select>
               </div>
               
+              <div className="flex items-center justify-between">
+                <label className="text-sm text-slate-300">{t('monsterAttackInterval') || 'Monster Attack Interval'}</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min="2000"
+                    max="10000"
+                    step="500"
+                    value={settings.attackIntervalMs}
+                    onChange={(e) => settings.set('attackIntervalMs', parseInt(e.target.value))}
+                    className="w-24 h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer slider"
+                  />
+                  <span className="text-sm text-white min-w-[3rem] text-right">
+                    {(settings.attackIntervalMs / 1000).toFixed(1)}s
+                  </span>
+                </div>
+              </div>
+              
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div className="text-center p-3 bg-red-500/20 rounded-lg border border-red-500/30">
                   <div className="text-sm text-red-300 mb-1">{t('monsterHealth')}</div>

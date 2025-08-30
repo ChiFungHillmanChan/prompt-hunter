@@ -10,6 +10,7 @@ export const translations = {
     language: "Language",
     monsterHealth: "Monster Health", 
     attackPerSecond: "Attack per Second (5s per attack)",
+    monsterAttackInterval: "Monster Attack Interval",
     
     // AI Assistant section
     aiAssistant: "🤖 AI Assistant",
@@ -198,6 +199,7 @@ export const translations = {
     language: "語言",
     monsterHealth: "怪物生命值",
     attackPerSecond: "每次攻擊傷害 (5秒一次攻擊)",
+    monsterAttackInterval: "怪物攻擊間隔",
     
     // AI Assistant section
     aiAssistant: "🤖 AI 助手",

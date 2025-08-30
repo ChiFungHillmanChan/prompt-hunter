@@ -21,3 +21,35 @@ canvas, img {
   image-rendering: pixelated;
   image-rendering: crisp-edges; /* fallback */
 }
+
+/* Custom slider styling */
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: #8b5cf6;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+}
+
+.slider::-moz-range-thumb {
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: #8b5cf6;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+}
+
+.slider::-webkit-slider-track {
+  background: #475569;
+  border-radius: 8px;
+  height: 8px;
+}
+
+.slider::-moz-range-track {
+  background: #475569;
+  border-radius: 8px;
+  height: 8px;
+}
