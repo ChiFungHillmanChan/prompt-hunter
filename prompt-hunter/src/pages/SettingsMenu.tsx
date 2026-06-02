@@ -5,6 +5,8 @@ import { useContent } from '../store/content';
 import { useProgress } from '../store/progress';
 import { maskKey } from '../lib/gemini';
 import { useTranslation } from '../hooks/useTranslation';
+import { useAuth } from '../store/auth';
+import { firebaseEnabled } from '../lib/firebase';
 import React from 'react';
 
 import { getCharacterStats } from '../lib/characterStats';
@@ -17,6 +19,9 @@ export default function SettingsMenu() {
   const { pack } = useContent();
   const { completedRoles } = useProgress();
   const { t } = useTranslation();
+  const user = useAuth((s) => s.user);
+  const signIn = useAuth((s) => s.signIn);
+  const signOutUser = useAuth((s) => s.signOutUser);
   const [apiKey, setApiKey] = React.useState<string>(() => sessionStorage.getItem('gemini_api_key') || '');
   const [newApiKey, setNewApiKey] = React.useState('');
   const [showKeyInput, setShowKeyInput] = React.useState(false);
@@ -273,7 +278,37 @@ export default function SettingsMenu() {
             <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
               {t('aiAssistant')}
             </h2>
-            
+
+            {/* Account (shared AI key) */}
+            {firebaseEnabled && (
+              <div className="mb-4">
+                {user ? (
+                  <div className="flex items-center justify-between p-3 bg-blue-500/20 rounded-lg border border-blue-500/30 gap-3">
+                    <div className="min-w-0">
+                      <div className="text-sm text-blue-300 mb-1">{t('signedInAs')}</div>
+                      <div className="text-white text-sm truncate">{user.email}</div>
+                      {!apiKey && (
+                        <div className="text-xs text-slate-300 mt-1">{t('sharedKeyActive')}</div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => { void signOutUser(); }}
+                      className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium transition-colors shrink-0"
+                    >
+                      {t('signOut')}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { void signIn(); }}
+                    className="w-full px-4 py-2 bg-white text-slate-800 hover:bg-slate-100 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    {t('signInWithGoogle')}
+                  </button>
+                )}
+              </div>
+            )}
+
             {apiKey && !showKeyInput ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-3 bg-green-500/20 rounded-lg border border-green-500/30">

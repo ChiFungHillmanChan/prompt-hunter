@@ -1,9 +1,10 @@
 import React from 'react';
-import { callGemini, GeminiError } from '../lib/gemini';
+import { callGemini, callGeminiProxy, GeminiError } from '../lib/gemini';
 import { buildContext } from '../lib/contextBuilder';
 import type { Phase, Role } from '../types/content';
 import { useToast } from './Toast';
 import { useTranslation } from '../hooks/useTranslation';
+import { useAuth } from '../store/auth';
 
 type Props = {
   role: Role;
@@ -20,6 +21,11 @@ type ChatMessage = {
 export default function ChatPanel({ role, phase, onDetectiveDamage }: Props) {
   const { t, language } = useTranslation();
   const [apiKey] = React.useState<string>(() => sessionStorage.getItem('gemini_api_key') || '');
+  const user = useAuth((s) => s.user);
+  const getToken = useAuth((s) => s.getToken);
+  // A personal key (entered by the user) is used directly; otherwise a signed-in
+  // user goes through the shared, rate-limited /api/gemini proxy.
+  const canChat = !!apiKey || !!user;
   const [prompt, setPrompt] = React.useState('');
   const [resp, setResp] = React.useState('');
   // removed usage tracking UI
@@ -59,7 +65,7 @@ export default function ChatPanel({ role, phase, onDetectiveDamage }: Props) {
       setResp('????????????????????');
       return;
     }
-    if (!apiKey || loading || !prompt.trim()) return;
+    if (!canChat || loading || !prompt.trim()) return;
     setLoading(true);
     
     // Add user message to chat history for Detective
@@ -101,7 +107,14 @@ STRICT EXAMPLES of "Not related":
 BE VERY STRICT: If the input doesn't clearly ask about something specific in the detective story, respond with "Not related".`;
       }
       
-      const res = await callGemini(apiKey, ctx);
+      let res;
+      if (apiKey) {
+        res = await callGemini(apiKey, ctx);
+      } else {
+        const token = await getToken();
+        if (!token) throw new GeminiError(t('signInFailed'), { status: 401, code: 'NO_TOKEN' });
+        res = await callGeminiProxy(token, ctx);
+      }
       let text = (res.text || '').trim();
       
       // Detective mode: force only Yes/No/Not related responses
@@ -189,7 +202,11 @@ BE VERY STRICT: If the input doesn't clearly ask about something specific in the
       // usage tracking removed from UI
     } catch (err) {
       if (err instanceof GeminiError) {
-        if (err.status === 429) {
+        if (err.code === 'DAILY_LIMIT') {
+          toast.push('error', err.message || t('dailyLimitReached'));
+        } else if (err.code === 'NO_TOKEN' || err.code === 'BAD_TOKEN' || err.code === 'UNVERIFIED') {
+          toast.push('error', t('signInFailed'));
+        } else if (err.status === 429) {
           const errorData = err.raw as Record<string, unknown>;
           const isQuotaExhausted = (errorData?.error as Record<string, unknown>)?.message?.toString().includes('Quota exceeded');
           const isRateLimit = (errorData?.error as Record<string, unknown>)?.message?.toString().includes('rate limit') || 
@@ -288,7 +305,7 @@ BE VERY STRICT: If the input doesn't clearly ask about something specific in the
         className="w-full px-2 py-2 bg-black/40 rounded border border-white/10"
         placeholder={t('askForHelp')}
       />
-      <button onClick={onSend} disabled={loading || !apiKey} className="px-3 py-2 rounded bg-purple-600 disabled:opacity-50">
+      <button onClick={onSend} disabled={loading || !canChat} className="px-3 py-2 rounded bg-purple-600 disabled:opacity-50">
         {loading ? t('sending') : t('send')}
       </button>
       {resp && (

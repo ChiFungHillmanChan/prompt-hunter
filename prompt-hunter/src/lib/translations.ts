@@ -73,7 +73,20 @@ export const translations = {
     enterApiKey: "Enter Gemini API Key",
     apiKeyRequired: "This is required once per session. Restrict the key to HTTP referrers in Google AI Studio for safer frontend use.",
     continue: "Continue",
-    
+
+    // Sign-in / shared AI key
+    chooseHowToPlay: "Choose how to play",
+    signInWithGoogle: "Sign in with Google",
+    signingIn: "Signing in...",
+    sharedKeyDesc: "Free to start — uses a shared AI assistant with a daily limit.",
+    or: "or",
+    useOwnKey: "Use my own Gemini key",
+    signInFailed: "Sign-in failed. Please try again.",
+    dailyLimitReached: "Daily limit reached. Add your own Gemini key in Settings to keep going.",
+    signedInAs: "Signed in as",
+    sharedKeyActive: "Using shared AI assistant (daily limit applies)",
+    signOut: "Sign out",
+
     // Character specialties
     debuggingLogic: "Debugging & Logic",
     creativeMusic: "Creative Writing & Music", 
@@ -261,7 +274,20 @@ export const translations = {
     enterApiKey: "輸入 Gemini API 密鑰",
     apiKeyRequired: "進入遊戲前需要輸入一次。為咗安全起見，請喺 Google AI Studio 中限制密鑰到 HTTP 引用者。本遊戲不會獲取你的 API 密鑰。",
     continue: "繼續",
-    
+
+    // 登入 / 共用 AI 密鑰
+    chooseHowToPlay: "選擇遊玩方式",
+    signInWithGoogle: "用 Google 登入",
+    signingIn: "登入緊...",
+    sharedKeyDesc: "免費開始 — 使用共用 AI 助手，每日有次數限制。",
+    or: "或者",
+    useOwnKey: "用自己嘅 Gemini 密鑰",
+    signInFailed: "登入失敗，請再試一次。",
+    dailyLimitReached: "已達每日上限。喺設定加入自己嘅 Gemini 密鑰就可以繼續。",
+    signedInAs: "已登入身份",
+    sharedKeyActive: "正在使用共用 AI 助手（有每日次數限制）",
+    signOut: "登出",
+
     // Character specialties
     debuggingLogic: "除錯同邏輯",
     creativeMusic: "創意寫作同音樂", 

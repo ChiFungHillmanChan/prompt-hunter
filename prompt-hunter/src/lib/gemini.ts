@@ -150,6 +150,44 @@ async function callGeminiWithRetry(apiKey: string, text: string, maxRetries: num
   throw lastError || new GeminiError('Max retries exceeded');
 }
 
+// Calls the server-side proxy (/api/gemini) using a Firebase ID token instead of
+// a raw Gemini key. Used for signed-in players on the shared, rate-limited key.
+export async function callGeminiProxy(idToken: string, text: string): Promise<GeminiResponse> {
+  if (!idToken) {
+    throw new GeminiError('Sign in required', { status: 401, code: 'NO_TOKEN' });
+  }
+  if (!text || !text.trim()) {
+    throw new GeminiError('Text prompt is required');
+  }
+
+  const res = await fetch('/api/gemini', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${idToken}`,
+    },
+    body: JSON.stringify({ text }),
+  });
+
+  let body: Record<string, unknown> | null = null;
+  try {
+    body = await res.json();
+  } catch {
+    // Non-JSON response
+  }
+
+  if (!res.ok) {
+    const message = (body?.error as string) || `Proxy HTTP ${res.status}: ${res.statusText}`;
+    const code = typeof body?.code === 'string' ? (body.code as string) : undefined;
+    throw new GeminiError(message, { status: res.status, code, raw: body });
+  }
+
+  return {
+    text: ((body?.text as string) || '').trim(),
+    usage: (body?.usage as GeminiResponse['usage']) || undefined,
+  };
+}
+
 export function maskKey(key: string): string {
   if (!key) return '';
   const last = key.slice(-4);
